@@ -9,7 +9,8 @@ from lib.frame_label_consensus import calculate_frame_level_agreement, calculate
 from lib.project_access import get_user_client, list_projects, get_classifications_ontology, count_label_rows, \
     list_all_data_rows, download_data_hash_data_from_projects, get_all_datasets
 
-load_dotenv()
+
+load_dotenv('utf-8')
 app_user_client = get_user_client(os.getenv('ENCORD_KEYFILE'))
 
 if 'attached_datasets' not in st.session_state:

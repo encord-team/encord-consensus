@@ -6,7 +6,7 @@ from encord import EncordUserClient, Project
 
 
 def get_user_client(path_to_keyfile: str) -> EncordUserClient:
-    with Path(path_to_keyfile).open() as f:
+    with Path(path_to_keyfile).open(encoding="utf-8") as f:
         private_key = f.read()
     return EncordUserClient.create_with_ssh_private_key(private_key)
 
