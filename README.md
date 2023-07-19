@@ -44,6 +44,7 @@ echo "ENCORD_KEYFILE=/path/to/keyfile/.ssh/id_ed25519" > .env
 On Windows it may be necessary to open the file in Notepad and save it as utf-8 without BOM.
 File>Save As, then change 'Save as type' to 'All files' and choose 'Encoding' as `UTF-8`.
 This only has to be done once.
+
 4. Install the tool:
 ```commandline
 pip install git+ssh://git@github.com/encord-team/encord-consensus.git
