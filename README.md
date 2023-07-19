@@ -33,10 +33,17 @@ cd some-dir-name
 python3.11 -m venv env
 source env/bin/activate
 ```
+For Windows environments, the command to activate the environment is
+```commandline
+.\env\Scripts\activate
+```
 3. Create a `.env`  file and specify the path to your private keyfile (this only has to be done once):
 ```commandline
 echo "ENCORD_KEYFILE=/path/to/keyfile/.ssh/id_ed25519" > .env
 ```
+On Windows it may be necessary to open the file in Notepad and save it as utf-8 without BOM.
+File>Save As, then change 'Save as type' to 'All files' and choose 'Encoding' as `UTF-8`.
+This only has to be done once.
 4. Install the tool:
 ```commandline
 pip install git+ssh://git@github.com/encord-team/encord-consensus.git
@@ -44,7 +51,8 @@ pip install git+ssh://git@github.com/encord-team/encord-consensus.git
 
 ## GUI
 ### Starting the app
-1. Run `encord-consensus` in your terminal.
+1. Before starting the app, you will need to activate your virtual environment.
+2. Run `encord-consensus` in your terminal.
 This will bring up the app in your browser, which you can use to run consensus.
 
 ### Using the app
@@ -57,7 +65,7 @@ Additionally, we run some checks to see if the tasks within the projects have be
 Once you have selected all the required projects, select the relevant data item to run consensus on.
 Depending on the number of labels, length of video and number of projects being targeted this may take some time.
 
-You will then see a global consensus report, showing on how many frames a minimium of N annotators agreed.
+You will then see a global consensus report, showing on how many frames a minimum of N annotators agreed.
 The maximum agreement is the number of projects (implicitly annotators) being compared.
 
 You will have access to 2 sliders, which allow you to filter by two parameters:
