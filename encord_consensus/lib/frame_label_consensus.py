@@ -4,8 +4,12 @@ from typing import List, DefaultDict, Dict
 from .data_model import Answer, AggregatedView, ClassificationView, RegionOfInterest
 
 
-def aggregate_by_answer(prepared_data: List[ClassificationView]) -> List[AggregatedView]:
-    pre_aggregated: DefaultDict[Answer, list[ClassificationView]] = defaultdict(list[ClassificationView])
+def aggregate_by_answer(
+    prepared_data: List[ClassificationView],
+) -> List[AggregatedView]:
+    pre_aggregated: DefaultDict[Answer, list[ClassificationView]] = defaultdict(
+        list[ClassificationView]
+    )
     for c in prepared_data:
         pre_aggregated[c.answer].append(c)
     processed_aggregated: List[AggregatedView] = []
@@ -18,7 +22,9 @@ def aggregate_by_answer(prepared_data: List[ClassificationView]) -> List[Aggrega
     return processed_aggregated
 
 
-def find_regions_of_interest(aggregated_data: List[AggregatedView], total_num_annotators: int) -> List[RegionOfInterest]:
+def find_regions_of_interest(
+    aggregated_data: List[AggregatedView], total_num_annotators: int
+) -> List[RegionOfInterest]:
     regions: List[RegionOfInterest] = []
     for agg_view in aggregated_data:
         last_frame = None
@@ -44,14 +50,16 @@ def find_regions_of_interest(aggregated_data: List[AggregatedView], total_num_an
                 frame_votes=s,
                 frame_vote_counts=frame_vote_counts,
                 max_agreement=max(frame_vote_counts.values()),
-                region_identifier=idx
+                region_identifier=idx,
             )
             region.score = calculate_agreement_in_region(region, total_num_annotators)
             regions.append(region)
     return regions
 
 
-def calculate_agreement_in_region(region: RegionOfInterest, total_num_annotators: int) -> float:
+def calculate_agreement_in_region(
+    region: RegionOfInterest, total_num_annotators: int
+) -> float:
     frame_vote_counts = region.frame_vote_counts
     num_frames = 1 + max(frame_vote_counts.keys()) - min(frame_vote_counts.keys())
     return sum(frame_vote_counts.values()) / (total_num_annotators * num_frames)
@@ -64,19 +72,28 @@ def process_vote_counts(number_of_annotators_agreeing) -> Dict[int, int]:
         for num_agreed in set(number_of_annotators_agreeing)
     }
     return {
-        n: sum([
-            exact_num_agreed[num_agreed] for num_agreed in range(n, max_number_of_annotators_agreeing + 1)
-        ])
+        n: sum(
+            [
+                exact_num_agreed[num_agreed]
+                for num_agreed in range(n, max_number_of_annotators_agreeing + 1)
+            ]
+        )
         for n in exact_num_agreed.keys()
     }
 
 
-def calculate_frame_level_integrated_agreement(aggregated_data: List[AggregatedView]) -> Dict[int, int]:
+def calculate_frame_level_integrated_agreement(
+    aggregated_data: List[AggregatedView],
+) -> Dict[int, int]:
     number_of_annotators_agreeing = []
     for agg_view in aggregated_data:
-        number_of_annotators_agreeing.extend([len(v) for v in agg_view.frame_votes.values()])
+        number_of_annotators_agreeing.extend(
+            [len(v) for v in agg_view.frame_votes.values()]
+        )
     return process_vote_counts(number_of_annotators_agreeing)
 
 
-def calculate_region_frame_level_integrated_agreement(region: RegionOfInterest) -> Dict[int, int]:
+def calculate_region_frame_level_integrated_agreement(
+    region: RegionOfInterest,
+) -> Dict[int, int]:
     return process_vote_counts(list(region.frame_vote_counts.values()))
