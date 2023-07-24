@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Tuple, Dict, DefaultDict
+from typing import List, Dict, DefaultDict
 
 from pydantic import BaseModel, Field
 
@@ -43,18 +43,3 @@ class RegionOfInterest(BaseModel):
     max_agreement: int
     region_identifier: int
     score: float | None = None
-
-
-# TODO: Use this
-class FrameView:
-    def __init__(self, vote_project_hash):
-        self.vote_project_hashes = [vote_project_hash]
-        self._vote_count = 1
-
-    def add_vote(self, vote_project_hash):
-        self.vote_project_hashes.append(vote_project_hash)
-        self._vote_count += 1
-
-    @property
-    def vote_count(self):
-        return self._vote_count
