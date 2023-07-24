@@ -4,8 +4,9 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from lib.data_transformation import prepare_data_for_consensus
-from lib.frame_label_consensus import calculate_frame_level_agreement, calculate_frame_level_integrated_agreement, \
-    find_regions_of_interest, calculate_agreement_in_region, calculate_region_frame_level_integrated_agreement
+from lib.frame_label_consensus import calculate_frame_level_integrated_agreement, \
+    find_regions_of_interest, calculate_region_frame_level_integrated_agreement, \
+    aggregate_by_answer
 from lib.project_access import get_user_client, list_projects, get_classifications_ontology, count_label_rows, \
     list_all_data_rows, download_data_hash_data_from_projects, get_all_datasets
 
@@ -108,23 +109,21 @@ elif st.session_state.selected_data_hash:
     st.write(st.session_state.selected_data_hash)
 
 # TODO: extract emails and project names for consensus
-# TODO: instance level comparison (slightly trickier, need to do some clever indexing for big projects + handle edges)
 # TODO: Export
-# TODO: make the fqname format nicer...
 
 if st.session_state.lr_data:
+    total_num_annnotators = len(st.session_state.selected_projects)
     if not st.session_state.consensus_has_been_calculated:
         with st.spinner('Processing data...'):
             prepared_data = prepare_data_for_consensus(st.session_state.ontology, st.session_state.lr_data)
-            frame_level_agreement_data = calculate_frame_level_agreement(prepared_data)
-            st.session_state.fl_integrated_agreement = calculate_frame_level_integrated_agreement(frame_level_agreement_data)
-            st.session_state.regions_of_interest = find_regions_of_interest(frame_level_agreement_data)
+            aggregated_data = aggregate_by_answer(prepared_data)
+            st.session_state.fl_integrated_agreement = calculate_frame_level_integrated_agreement(aggregated_data)
+            st.session_state.regions_of_interest = find_regions_of_interest(aggregated_data, total_num_annnotators)
             st.session_state.consensus_has_been_calculated = True
     st.write('## Consensus Section')
     st.write('### Consensus Agreement Report')
     st.bar_chart(st.session_state.fl_integrated_agreement)
     st.write('### Demo Consensus Analysis Tool')
-    total_num_annnotators = len(st.session_state.selected_projects)
     st.write(f'There are a total of {total_num_annnotators} annotators that could agree.')
     st.slider(
         'Minimum Agreement',
@@ -142,17 +141,14 @@ if st.session_state.lr_data:
         step=0.05,
         key='min_score_slider',
     )
-    for key, value in st.session_state.regions_of_interest.items():
-        score = round(calculate_agreement_in_region(value['data'], total_num_annnotators), 2)
-        if value['max_agreement'] >= st.session_state.min_agreement_slider and score >= st.session_state.min_score_slider:
-            mini_report = f"Mini Report\nScore: {score}\n" + "\n".join([
+    for region in st.session_state.regions_of_interest:
+        if region.max_agreement >= st.session_state.min_agreement_slider and region.score >= st.session_state.min_score_slider:
+            mini_report = f"Mini Report\nScore: {round(region.score, 2)}\n" + "\n".join([
                 f"At least {k} annotators agreeing: {v} frames"
-                for k, v in calculate_region_frame_level_integrated_agreement(value['data']).items()
+                for k, v in calculate_region_frame_level_integrated_agreement(region).items()
             ])
-            # TODO: Make the internal representation of this better
-            prefix_identifier = key.split('@')[0]
-            identifier_text = f"Region number {key.split('@')[1]}\n\nSelected Answers\n"
-            for idx, chunk in enumerate(prefix_identifier.split('&')):
-                identifier_text += (idx * '\t') + f"{chunk.split('=')[0]}: {chunk.split('=')[1]}\n"
+            identifier_text = f"Region number {region.region_identifier}\n\nSelected Answers\n"
+            for idx, part in enumerate(region.answer.fq_parts):
+                identifier_text += (idx * '\t') + f"{part.question}: {part.answer}\n"
             st.code(f"{identifier_text}\n{mini_report}")
-            st.bar_chart(value['data'])
+            st.bar_chart(region.frame_vote_counts)

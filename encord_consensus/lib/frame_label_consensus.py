@@ -1,27 +1,33 @@
-def calculate_frame_level_agreement(prepared_data, min_agreement=0):
-    res = {}
-    already_computed = set()
-    for label_hash, frame_view in prepared_data.items():
-        for fq_name, frames in frame_view.items():
-            if fq_name not in already_computed:
-                already_computed.add(fq_name)
-                all_frames = []
-                for fv in prepared_data.values():
-                    all_frames.extend(fv.get(fq_name, []))
-                data = {f: all_frames.count(f) for f in set(all_frames) if all_frames.count(f) >= min_agreement}
-                if data:
-                    res[fq_name] = data
-    return res
+from collections import defaultdict
+from typing import List, DefaultDict, Dict
+
+from .data_model import Answer, AggregatedView, ClassificationView, RegionOfInterest
 
 
-def find_regions_of_interest(frame_level_agreement_data):
-    regions = {}
-    for fq_name, data in frame_level_agreement_data.items():
-        last_frame = list(data.keys())[0] - 1
+def aggregate_by_answer(prepared_data: List[ClassificationView]) -> List[AggregatedView]:
+    pre_aggregated: DefaultDict[Answer, list[ClassificationView]] = defaultdict(list[ClassificationView])
+    for c in prepared_data:
+        pre_aggregated[c.answer].append(c)
+    processed_aggregated: List[AggregatedView] = []
+    for answer, classification_views in pre_aggregated.items():
+        a = AggregatedView(answer=answer)
+        for c in classification_views:
+            for f in c.frames:
+                a.frame_votes[f].append(c.source_project_hash)
+        processed_aggregated.append(a)
+    return processed_aggregated
+
+
+def find_regions_of_interest(aggregated_data: List[AggregatedView], total_num_annotators: int) -> List[RegionOfInterest]:
+    regions: List[RegionOfInterest] = []
+    for agg_view in aggregated_data:
+        last_frame = None
 
         sections = []
         section = {}
-        for f, n in data.items():
+        for f, n in sorted(agg_view.frame_votes.items()):
+            if not last_frame:
+                last_frame = f - 1
             if f - 1 != last_frame:
                 sections.append(section)
                 section = {f: n}
@@ -32,16 +38,26 @@ def find_regions_of_interest(frame_level_agreement_data):
         sections.append(section)
 
         for idx, s in enumerate(sections):
-            regions[f'{fq_name}@{idx}'] = {'data': s, 'max_agreement': max(s.values())}
+            frame_vote_counts = {f: len(votes) for f, votes in s.items()}
+            region = RegionOfInterest(
+                answer=agg_view.answer,
+                frame_votes=s,
+                frame_vote_counts=frame_vote_counts,
+                max_agreement=max(frame_vote_counts.values()),
+                region_identifier=idx
+            )
+            region.score = calculate_agreement_in_region(region, total_num_annotators)
+            regions.append(region)
     return regions
 
 
-def calculate_agreement_in_region(region_data, total_num_annnotators):
-    num_frames = 1 + max(region_data.keys()) - min(region_data.keys())
-    return sum(region_data.values()) / (total_num_annnotators * num_frames)
+def calculate_agreement_in_region(region: RegionOfInterest, total_num_annotators: int) -> float:
+    frame_vote_counts = region.frame_vote_counts
+    num_frames = 1 + max(frame_vote_counts.keys()) - min(frame_vote_counts.keys())
+    return sum(frame_vote_counts.values()) / (total_num_annotators * num_frames)
 
 
-def process_votes(number_of_annotators_agreeing):
+def process_vote_counts(number_of_annotators_agreeing) -> Dict[int, int]:
     max_number_of_annotators_agreeing = max(number_of_annotators_agreeing)
     exact_num_agreed = {
         num_agreed: number_of_annotators_agreeing.count(num_agreed)
@@ -55,12 +71,12 @@ def process_votes(number_of_annotators_agreeing):
     }
 
 
-def calculate_frame_level_integrated_agreement(frame_level_agreement_data):
+def calculate_frame_level_integrated_agreement(aggregated_data: List[AggregatedView]) -> Dict[int, int]:
     number_of_annotators_agreeing = []
-    for fl_agreement in frame_level_agreement_data.values():
-        number_of_annotators_agreeing.extend([v for v in fl_agreement.values()])
-    return process_votes(number_of_annotators_agreeing)
+    for agg_view in aggregated_data:
+        number_of_annotators_agreeing.extend([len(v) for v in agg_view.frame_votes.values()])
+    return process_vote_counts(number_of_annotators_agreeing)
 
 
-def calculate_region_frame_level_integrated_agreement(region):
-    return process_votes(list(region.values()))
+def calculate_region_frame_level_integrated_agreement(region: RegionOfInterest) -> Dict[int, int]:
+    return process_vote_counts(list(region.frame_vote_counts.values()))
