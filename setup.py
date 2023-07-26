@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='encord-consensus',
-    version='0.0.1',
+    version='0.0.11',
     author='Encord',
     author_email='support@encord.com',
     description='Tool for consensus on Encord.',
@@ -17,6 +17,7 @@ setuptools.setup(
     install_requires=[
         'encord==0.1.83',
         'streamlit==1.23.1',
+        'pydantic==2.0.3',
         'python-dotenv'
     ],
     entry_points={
