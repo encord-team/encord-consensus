@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from typing import Dict, DefaultDict, List
 
@@ -38,14 +39,21 @@ def prepare_data_for_consensus(ontology, lr_data) -> List[ClassificationView]:
                     for classification in lr["classification_answers"][
                         cl["classificationHash"]
                     ]["classifications"]:
-                        fq_parts.append(
-                            FQPart(
-                                question=classification["value"],
-                                answer=classification["answers"][0]["value"],
-                                fq_part=f"{classification['value']}={classification['answers'][0]['value']}",
-                                feature_hash=classification["featureHash"],
+                        if len(classification["answers"]) == 1:
+                            fq_parts.append(
+                                FQPart(
+                                    question=classification["value"],
+                                    answer=classification["answers"][0]["value"],
+                                    fq_part=f"{classification['value']}={classification['answers'][0]['value']}",
+                                    feature_hash=classification["featureHash"],
+                                )
                             )
-                        )
+                        else:
+                            logging.warning(
+                                f"Ignoring {classification}  on project {project_hash} "
+                                f"as it has {len(classification['answers'])} answers. "
+                                f"Only 1 answer is currently supported."
+                            )
                     sorted_fq_parts = sorted(
                         fq_parts,
                         key=lambda x: get_precedence(
