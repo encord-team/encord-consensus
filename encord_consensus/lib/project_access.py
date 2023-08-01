@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Union
 
 from encord import EncordUserClient, Project
 
@@ -39,7 +39,7 @@ def count_label_rows(user_client: EncordUserClient, project_hash: str) -> int:
 
 
 def list_all_data_rows(
-    user_client: EncordUserClient, dataset_hashes: List[str]
+    user_client: EncordUserClient, dataset_hashes: Union[Set[str], List[str]]
 ) -> List:
     res = []
     for dataset_hash in dataset_hashes:
