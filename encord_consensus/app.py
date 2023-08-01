@@ -196,7 +196,7 @@ if st.session_state.lr_data:
                 ]
             )
             identifier_text = (
-                f"Region number {region.region_identifier}\n\nSelected Answers\n"
+                f"Region number {region.region_number}\n\nSelected Answers\n"
             )
             for idx, part in enumerate(region.answer.fq_parts):
                 identifier_text += (idx * "\t") + f"{part.question}: {part.answer}\n"

@@ -41,5 +41,5 @@ class RegionOfInterest(BaseModel):
     frame_votes: Dict[int, List[str]] = Field(allow_mutation=False)
     frame_vote_counts: Dict[int, int] = Field(allow_mutation=False)
     max_agreement: int
-    region_identifier: int
+    region_number: int
     score: float | None = None
