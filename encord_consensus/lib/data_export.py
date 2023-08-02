@@ -3,11 +3,7 @@ from typing import List, Dict, Set
 from .data_model import RegionOfInterest
 
 
-def export_regions_of_interest(
-    regions: List[RegionOfInterest],
-    lr_data: Dict,
-    region_hashes_to_include: Set[int] = None,
-) -> Dict:
+def _initialise_export_dict(lr_data: Dict) -> Dict:
     first_lr = list(lr_data.values())[0]
     result = {
         k: first_lr[k]
@@ -19,12 +15,20 @@ def export_regions_of_interest(
             "data_type",
         ]
     }
-    data_hash = result["data_hash"]
     result["data_units"] = first_lr["data_units"]
-    result["data_units"][data_hash]["labels"] = {}
+    result["data_units"][result["data_hash"]]["labels"] = {}
     for k in ["classification_answers", "consensus_meta"]:
         result[k] = {}
+    return result
 
+
+def export_regions_of_interest(
+    regions: List[RegionOfInterest],
+    lr_data: Dict,
+    region_hashes_to_include: Set[int] = None,
+) -> Dict:
+    result = _initialise_export_dict(lr_data)
+    data_hash = result["data_hash"]
     filtered_regions = regions
     if region_hashes_to_include:
         filtered_regions = [r for r in regions if hash(r) in region_hashes_to_include]
