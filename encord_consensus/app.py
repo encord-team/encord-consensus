@@ -248,7 +248,7 @@ if st.session_state.lr_data:
         st.download_button(
             label="Download Export",
             data=st.session_state.data_export,
-            file_name=f'consensus_label_export_{datetime.datetime.now().strftime("%Y-%M-%d-%H:%m:%s")}.json',
+            file_name=f'consensus_label_export_{datetime.datetime.now().isoformat(timespec="seconds")}.json',
             mime="application/json",
             on_click=reset_export,
         )
