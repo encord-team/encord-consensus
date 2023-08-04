@@ -10,7 +10,7 @@ We consider two classifications to be 'equal' if they contain the same answers.
 Note that these answers must be equal all the way down the nested hierarchy.
 If a single answer differs, the classifications are not equal.
 
-Regions of interest are labelled according to the following format
+Regions of interest are uniquely identified according to the following 'fully qualified answer'
 ```
 question1=answer1&question2=answer2...&questionN=answerN@region_of_interest_M
 ```
@@ -22,15 +22,19 @@ If 2 people label 0-10 as `is_walking=yes` and 3 people label 15-20 as `is_walki
 one for `0-10` and one for `15-20`.
 These are not considered the same region as there is a gap between them (no annotator indicated that 11-14 could be `is_walking=yes`).
 
-## Setup
+## First Installation
 1. Create a directory to hold the environment
 ```commandline
 mkdir some-dir-name
 cd some-dir-name
 ```
-2. Set up your python environment (this only has to be done once):
+2. Create a python virtual environment (this only has to be done once):
 ```commandline
 python3.11 -m venv env
+```
+3. Activate your virtual environment
+On Mac OS and Linux, run:
+```commandline
 source env/bin/activate
 ```
 For Windows environments, the command to activate the environment is
@@ -47,12 +51,20 @@ This only has to be done once.
 
 4. Install the tool:
 ```commandline
-pip install git+ssh://git@github.com/encord-team/encord-consensus.git
+pip install git+https://github.com/encord-team/encord-consensus.git
+```
+
+## Upgrade
+We are actively working on the consensus tool, it can be upgraded through pip by following these steps:
+1. Activate your virtual environment as per step 3. in 'Setup'.
+2. Run
+```commandline
+pip install --upgrade git+https://github.com/encord-team/encord-consensus.git
 ```
 
 ## GUI
 ### Starting the app
-1. Before starting the app, you will need to activate your virtual environment.
+1. Before starting the app, you will need to activate your virtual environment as per step 3. in 'Setup'.
 2. Run `encord-consensus` in your terminal.
 This will bring up the app in your browser, which you can use to run consensus.
 
@@ -101,8 +113,27 @@ If all 4 annotators had labelled 1-10 in this region, then the score would be `(
 This makes sense as a score of 1 implies perfect agreement.
 
 ## Export
-We are adding support for exporting the new accepted consensus based labels to the Encord JSON format.
-This will be an export of accepted regions of interest as a new label.
+### Usage
+Export functionality is available in the tool.
+When filtering down regions of interest, they can be selected using the checkbox next to them.
+Multiple regions of interest can be selected.
+Once all regions of interest have been selected as 'consensus generated labels', scrolling down to the bottom of the page will show the export section.
+The export is a two step process, first with the export being generated and then with the export being downloaded.
+It will need to be regenerated every time you want to download the file.
+The file will have the format `consensus_label_export_$TIMESTAMP.json`.
+### Format
+The export format is a work in progress and subject to change. We welcome feedback.
+The export format mirrors the structure of encord json export format and the label row structure (LabelRowV1).
+Additional fields have been added, notably:
+At the frame label level:
+- `objectHash` becomes `regionHash` in the consensus export.
+- `voteProjectHashes` has been added. This is a list with the project hashes who voted for this label on this frame.
+- `voteCount` has been added. This is an integer counting the number of votes for this label on this frame.
+
+At the label blurb level:
+- `classification_answers` has not changed, except for the fact that `regionHash` is used instead of `objectHash`.
+- `consensus_meta` has been added. This is keyed on the `regionHash` and includes the `score` of the region along with the fully qualified answer string `answer_fq_name`.
+
 
 ## CLI
 Support for this is coming soon.

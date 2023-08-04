@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='encord-consensus',
-    version='0.0.12',
+    version='0.0.13',
     author='Encord',
     author_email='support@encord.com',
     description='Tool for consensus on Encord.',

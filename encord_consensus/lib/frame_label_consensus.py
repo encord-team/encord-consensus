@@ -50,7 +50,7 @@ def find_regions_of_interest(
                 frame_votes=s,
                 frame_vote_counts=frame_vote_counts,
                 max_agreement=max(frame_vote_counts.values()),
-                region_identifier=idx,
+                region_number=idx,
             )
             region.score = calculate_agreement_in_region(region, total_num_annotators)
             regions.append(region)

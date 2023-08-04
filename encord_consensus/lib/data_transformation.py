@@ -36,9 +36,10 @@ def prepare_data_for_consensus(ontology, lr_data) -> List[ClassificationView]:
             for cl in labels["classifications"]:
                 if not lookup.get(cl["classificationHash"]):
                     fq_parts = []
-                    for classification in lr["classification_answers"][
+                    classification_answers = lr["classification_answers"][
                         cl["classificationHash"]
-                    ]["classifications"]:
+                    ]
+                    for classification in classification_answers["classifications"]:
                         if len(classification["answers"]) == 1:
                             fq_parts.append(
                                 FQPart(
@@ -62,7 +63,12 @@ def prepare_data_for_consensus(ontology, lr_data) -> List[ClassificationView]:
                     )
                     fq_name = "&".join([x.fq_part for x in sorted_fq_parts])
                     lookup[cl["classificationHash"]] = Answer(
-                        fq_name=fq_name, fq_parts=sorted_fq_parts
+                        classification_answers=classification_answers,
+                        name=cl["name"],
+                        value=cl["value"],
+                        feature_hash=cl["featureHash"],
+                        fq_name=fq_name,
+                        fq_parts=sorted_fq_parts,
                     )
                 answer = lookup[cl["classificationHash"]]
                 res[answer].append(int(frame))

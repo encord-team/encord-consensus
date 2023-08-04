@@ -1,8 +1,12 @@
+import datetime
+import json
 import os
 
 import streamlit as st
 from dotenv import load_dotenv
 
+from lib.data_export import export_regions_of_interest
+from lib.data_model import RegionOfInterest
 from lib.data_transformation import prepare_data_for_consensus
 from lib.frame_label_consensus import (
     calculate_frame_level_integrated_agreement,
@@ -39,6 +43,10 @@ if "project_title_lookup" not in st.session_state:
     st.session_state.project_title_lookup = {}
 if "consensus_has_been_calculated" not in st.session_state:
     st.session_state.consensus_has_been_calculated = False
+if "regions_to_export" not in st.session_state:
+    st.session_state.regions_to_export = set()
+if "data_export" not in st.session_state:
+    st.session_state.data_export = {}
 
 
 def st_add_project(project_hash, project_title):
@@ -78,6 +86,28 @@ def st_remove_project(project_hash):
     if not st.session_state.selected_projects:
         st.session_state.attached_datasets = []
         st.session_state.ontology = {}
+
+
+def st_select_region(region: RegionOfInterest):
+    region_hash = hash(region)
+    if region_hash not in st.session_state.regions_to_export:
+        st.session_state.regions_to_export.add(region_hash)
+    else:
+        st.session_state.regions_to_export.remove(region_hash)
+
+
+def prepare_export():
+    st.session_state.data_export = json.dumps(
+        export_regions_of_interest(
+            regions=st.session_state.regions_of_interest,
+            lr_data=st.session_state.lr_data,
+            region_hashes_to_include=st.session_state.regions_to_export,
+        )
+    )
+
+
+def reset_export():
+    st.session_state.data_export = {}
 
 
 st.write("# Consensus Tool")
@@ -142,7 +172,6 @@ elif st.session_state.selected_data_hash:
     st.write(st.session_state.selected_data_hash)
 
 # TODO: extract emails and project names for consensus
-# TODO: Export
 
 if st.session_state.lr_data:
     total_num_annnotators = len(st.session_state.selected_projects)
@@ -187,6 +216,9 @@ if st.session_state.lr_data:
             region.max_agreement >= st.session_state.min_agreement_slider
             and region.score >= st.session_state.min_score_slider
         ):
+            st.checkbox(
+                "Select", on_change=st_select_region, args=(region,), key=hash(region)
+            )
             mini_report = f"Mini Report\nScore: {round(region.score, 2)}\n" + "\n".join(
                 [
                     f"At least {k} annotators agreeing: {v} frames"
@@ -196,9 +228,27 @@ if st.session_state.lr_data:
                 ]
             )
             identifier_text = (
-                f"Region number {region.region_identifier}\n\nSelected Answers\n"
+                f"Region number {region.region_number}\n\nSelected Answers\n"
             )
             for idx, part in enumerate(region.answer.fq_parts):
                 identifier_text += (idx * "\t") + f"{part.question}: {part.answer}\n"
             st.code(f"{identifier_text}\n{mini_report}")
             st.bar_chart(region.frame_vote_counts)
+
+    st.write("### Export")
+    st.write(
+        f"There are a total of {len(st.session_state.regions_to_export)} regions to export."
+    )
+
+    if (
+        st.button("Prepare Export", on_click=prepare_export)
+        and st.session_state.data_export
+    ):
+        st.write("Your export is ready to download!")
+        st.download_button(
+            label="Download Export",
+            data=st.session_state.data_export,
+            file_name=f'consensus_label_export_{datetime.datetime.now().isoformat(timespec="seconds")}.json',
+            mime="application/json",
+            on_click=reset_export,
+        )

@@ -12,6 +12,10 @@ class FQPart(BaseModel):
 
 
 class Answer(BaseModel):
+    classification_answers: Dict
+    name: str
+    value: str
+    feature_hash: str
     fq_name: str
     fq_parts: List[FQPart]
 
@@ -41,5 +45,8 @@ class RegionOfInterest(BaseModel):
     frame_votes: Dict[int, List[str]] = Field(allow_mutation=False)
     frame_vote_counts: Dict[int, int] = Field(allow_mutation=False)
     max_agreement: int
-    region_identifier: int
+    region_number: int
     score: float | None = None
+
+    def __hash__(self) -> int:
+        return hash(hash(self.answer) + self.region_number)
