@@ -9,9 +9,9 @@ from lib.data_export import export_regions_of_interest
 from lib.data_model import RegionOfInterest
 from lib.data_transformation import prepare_data_for_consensus
 from lib.frame_label_consensus import (
-    calculate_frame_level_integrated_agreement,
+    calculate_frame_level_min_n_agreement,
     find_regions_of_interest,
-    calculate_region_frame_level_integrated_agreement,
+    calculate_region_frame_level_min_n_agreement,
     aggregate_by_answer,
 )
 from lib.project_access import (
@@ -182,7 +182,7 @@ if st.session_state.lr_data:
             )
             aggregated_data = aggregate_by_answer(prepared_data)
             st.session_state.fl_integrated_agreement = (
-                calculate_frame_level_integrated_agreement(aggregated_data)
+                calculate_frame_level_min_n_agreement(aggregated_data)
             )
             st.session_state.regions_of_interest = find_regions_of_interest(
                 aggregated_data, total_num_annnotators
@@ -225,7 +225,7 @@ if st.session_state.lr_data:
                 + "\n".join(
                     [
                         f"At least {k} annotators agreeing: {v} frames"
-                        for k, v in calculate_region_frame_level_integrated_agreement(
+                        for k, v in calculate_region_frame_level_min_n_agreement(
                             region
                         ).items()
                     ]

@@ -92,7 +92,7 @@ def process_vote_counts(number_of_annotators_agreeing) -> Dict[int, int]:
     }
 
 
-def calculate_frame_level_integrated_agreement(
+def calculate_frame_level_min_n_agreement(
     aggregated_data: List[AggregatedView],
 ) -> Dict[int, int]:
     number_of_annotators_agreeing = []
@@ -103,7 +103,7 @@ def calculate_frame_level_integrated_agreement(
     return process_vote_counts(number_of_annotators_agreeing)
 
 
-def calculate_region_frame_level_integrated_agreement(
+def calculate_region_frame_level_min_n_agreement(
     region: RegionOfInterest,
 ) -> Dict[int, int]:
     return process_vote_counts(list(region.frame_vote_counts.values()))
