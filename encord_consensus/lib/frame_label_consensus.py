@@ -6,7 +6,7 @@ from .data_model import (
     AggregatedView,
     ClassificationView,
     RegionOfInterest,
-    ScoreData,
+    ConsensusData,
 )
 
 
@@ -58,7 +58,7 @@ def find_regions_of_interest(
                 max_agreement=max(frame_vote_counts.values()),
                 region_number=idx,
             )
-            region.score_data = ScoreData(
+            region.consensus_data = ConsensusData(
                 integrated_agreement_score=calculate_integrated_agreement_score(
                     region, total_num_annotators
                 )
