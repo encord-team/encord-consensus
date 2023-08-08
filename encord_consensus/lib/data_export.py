@@ -39,7 +39,9 @@ def export_regions_of_interest(
             "classifications": region.answer.classification_answers["classifications"],
         }
         export_dict["consensus_meta"][region_hash] = {
-            "score": round(region.score, 4),
+            "integrated_agreement_score": round(
+                region.score_data.integrated_agreement_score, 4
+            ),
             "answer_fq_name": region.answer.fq_name,
         }
 

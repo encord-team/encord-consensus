@@ -1,7 +1,13 @@
 from collections import defaultdict
 from typing import List, DefaultDict, Dict
 
-from .data_model import Answer, AggregatedView, ClassificationView, RegionOfInterest
+from .data_model import (
+    Answer,
+    AggregatedView,
+    ClassificationView,
+    RegionOfInterest,
+    ScoreData,
+)
 
 
 def aggregate_by_answer(
@@ -52,12 +58,16 @@ def find_regions_of_interest(
                 max_agreement=max(frame_vote_counts.values()),
                 region_number=idx,
             )
-            region.score = calculate_agreement_in_region(region, total_num_annotators)
+            region.score_data = ScoreData(
+                integrated_agreement_score=calculate_integrated_agreement_score(
+                    region, total_num_annotators
+                )
+            )
             regions.append(region)
     return regions
 
 
-def calculate_agreement_in_region(
+def calculate_integrated_agreement_score(
     region: RegionOfInterest, total_num_annotators: int
 ) -> float:
     frame_vote_counts = region.frame_vote_counts

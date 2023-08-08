@@ -214,18 +214,22 @@ if st.session_state.lr_data:
     for region in st.session_state.regions_of_interest:
         if (
             region.max_agreement >= st.session_state.min_agreement_slider
-            and region.score >= st.session_state.min_score_slider
+            and region.score_data.integrated_agreement_score
+            >= st.session_state.min_score_slider
         ):
             st.checkbox(
                 "Select", on_change=st_select_region, args=(region,), key=hash(region)
             )
-            mini_report = f"Mini Report\nScore: {round(region.score, 2)}\n" + "\n".join(
-                [
-                    f"At least {k} annotators agreeing: {v} frames"
-                    for k, v in calculate_region_frame_level_integrated_agreement(
-                        region
-                    ).items()
-                ]
+            mini_report = (
+                f"Mini Report\nScore: {round(region.score_data.integrated_agreement_score, 2)}\n"
+                + "\n".join(
+                    [
+                        f"At least {k} annotators agreeing: {v} frames"
+                        for k, v in calculate_region_frame_level_integrated_agreement(
+                            region
+                        ).items()
+                    ]
+                )
             )
             identifier_text = (
                 f"Region number {region.region_number}\n\nSelected Answers\n"
