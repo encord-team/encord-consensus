@@ -11,9 +11,7 @@ from lib.data_transformation import prepare_data_for_consensus
 from lib.frame_label_consensus import (
     calculate_frame_level_min_n_agreement,
     find_regions_of_interest,
-    calculate_region_frame_level_min_n_agreement,
     aggregate_by_answer,
-    calculate_n_scores,
 )
 from lib.project_access import (
     get_user_client,
@@ -222,7 +220,7 @@ if st.session_state.lr_data:
                 "Select", on_change=st_select_region, args=(region,), key=hash(region)
             )
             mini_report = (
-                f"Mini Report\nIntegrated Agreement Score: {round(region.consensus_data.integrated_agreement_score, 2)}\n"
+                f"Mini Report\nIntegrated Agreement Score: {region.consensus_data.integrated_agreement_score}\n\n"
                 + "\n".join(
                     [
                         f"At least {k} annotators agreeing: {v} frames"
