@@ -13,6 +13,7 @@ from lib.frame_label_consensus import (
     find_regions_of_interest,
     calculate_region_frame_level_min_n_agreement,
     aggregate_by_answer,
+    calculate_n_scores,
 )
 from lib.project_access import (
     get_user_client,
@@ -221,13 +222,18 @@ if st.session_state.lr_data:
                 "Select", on_change=st_select_region, args=(region,), key=hash(region)
             )
             mini_report = (
-                f"Mini Report\nScore: {round(region.consensus_data.integrated_agreement_score, 2)}\n"
+                f"Mini Report\nIntegrated Agreement Score: {round(region.consensus_data.integrated_agreement_score, 2)}\n"
                 + "\n".join(
                     [
                         f"At least {k} annotators agreeing: {v} frames"
-                        for k, v in calculate_region_frame_level_min_n_agreement(
-                            region
-                        ).items()
+                        for k, v in region.consensus_data.min_n_agreement.items()
+                    ]
+                )
+                + "\n\nN Scores\n"
+                + "\n".join(
+                    [
+                        f"{n}_score: {s}"
+                        for n, s in region.consensus_data.n_scores.items()
                     ]
                 )
             )

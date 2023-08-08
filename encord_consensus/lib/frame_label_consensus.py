@@ -63,6 +63,7 @@ def find_regions_of_interest(
                     region, total_num_annotators
                 ),
                 min_n_agreement=calculate_region_frame_level_min_n_agreement(region),
+                n_scores=calculate_n_scores(region),
             )
             regions.append(region)
     return regions
@@ -108,3 +109,12 @@ def calculate_region_frame_level_min_n_agreement(
     region: RegionOfInterest,
 ) -> Dict[int, int]:
     return process_vote_counts(list(region.frame_vote_counts.values()))
+
+
+def calculate_n_scores(region: RegionOfInterest) -> Dict[int, float]:
+    frame_level_min_n_agreement = calculate_region_frame_level_min_n_agreement(region)
+    n_scores = {}
+    total_num_annotators = max(frame_level_min_n_agreement.keys())
+    for n in range(2, total_num_annotators + 1):
+        n_scores[n] = frame_level_min_n_agreement[n] / frame_level_min_n_agreement[1]
+    return n_scores
