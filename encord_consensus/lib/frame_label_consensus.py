@@ -62,6 +62,7 @@ def find_regions_of_interest(
                 integrated_agreement_score=calculate_integrated_agreement_score(
                     region, total_num_annotators
                 ),
+                min_n_agreement=calculate_region_frame_level_min_n_agreement(region),
             )
             regions.append(region)
     return regions

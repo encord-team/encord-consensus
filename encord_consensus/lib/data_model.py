@@ -42,7 +42,8 @@ class AggregatedView(BaseModel):
 
 class ConsensusData(BaseModel):
     max_agreement: int
-    integrated_agreement_score: float | None = None
+    integrated_agreement_score: float
+    min_n_agreement: Dict[int, int]
     n_scores: Dict[int, float] | None = None
 
 
