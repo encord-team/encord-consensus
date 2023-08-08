@@ -55,13 +55,13 @@ def find_regions_of_interest(
                 answer=agg_view.answer,
                 frame_votes=s,
                 frame_vote_counts=frame_vote_counts,
-                max_agreement=max(frame_vote_counts.values()),
                 region_number=idx,
             )
             region.consensus_data = ConsensusData(
+                max_agreement=max(frame_vote_counts.values()),
                 integrated_agreement_score=calculate_integrated_agreement_score(
                     region, total_num_annotators
-                )
+                ),
             )
             regions.append(region)
     return regions

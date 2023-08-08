@@ -213,7 +213,7 @@ if st.session_state.lr_data:
     )
     for region in st.session_state.regions_of_interest:
         if (
-            region.max_agreement >= st.session_state.min_agreement_slider
+            region.consensus_data.max_agreement >= st.session_state.min_agreement_slider
             and region.consensus_data.integrated_agreement_score
             >= st.session_state.min_score_slider
         ):

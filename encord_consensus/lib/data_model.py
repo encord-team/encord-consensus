@@ -41,6 +41,7 @@ class AggregatedView(BaseModel):
 
 
 class ConsensusData(BaseModel):
+    max_agreement: int
     integrated_agreement_score: float | None = None
     n_scores: Dict[int, float] | None = None
 
@@ -49,7 +50,6 @@ class RegionOfInterest(BaseModel):
     answer: Answer
     frame_votes: Dict[int, List[str]] = Field(allow_mutation=False)
     frame_vote_counts: Dict[int, int] = Field(allow_mutation=False)
-    max_agreement: int
     region_number: int
     consensus_data: ConsensusData | None = None
 
