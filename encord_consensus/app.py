@@ -203,18 +203,18 @@ if st.session_state.lr_data:
         key="min_agreement_slider",
     )
     st.slider(
-        "Minimum Score",
+        "Minimum Integrated Agreement Score",
         min_value=0.0,
         max_value=1.0,
         value=0.0,
         step=0.05,
-        key="min_score_slider",
+        key="min_integrated_score_slider",
     )
     for region in st.session_state.regions_of_interest:
         if (
             region.consensus_data.max_agreement >= st.session_state.min_agreement_slider
             and region.consensus_data.integrated_agreement_score
-            >= st.session_state.min_score_slider
+            >= st.session_state.min_integrated_score_slider
         ):
             st.checkbox(
                 "Select", on_change=st_select_region, args=(region,), key=hash(region)
