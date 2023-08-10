@@ -40,13 +40,19 @@ class AggregatedView(BaseModel):
     frame_votes: DefaultDict[int, List[str]] = defaultdict(list)
 
 
+class ConsensusData(BaseModel):
+    max_agreement: int
+    integrated_agreement_score: float
+    min_n_agreement: Dict[int, int]
+    n_scores: Dict[int, float] | None = None
+
+
 class RegionOfInterest(BaseModel):
     answer: Answer
     frame_votes: Dict[int, List[str]] = Field(allow_mutation=False)
     frame_vote_counts: Dict[int, int] = Field(allow_mutation=False)
-    max_agreement: int
     region_number: int
-    score: float | None = None
+    consensus_data: ConsensusData | None = None
 
     def __hash__(self) -> int:
         return hash(hash(self.answer) + self.region_number)

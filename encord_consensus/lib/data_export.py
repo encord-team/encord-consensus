@@ -39,8 +39,10 @@ def export_regions_of_interest(
             "classifications": region.answer.classification_answers["classifications"],
         }
         export_dict["consensus_meta"][region_hash] = {
-            "score": round(region.score, 4),
+            "max_agreement": region.consensus_data.max_agreement,
             "answer_fq_name": region.answer.fq_name,
+            "integrated_agreement_score": region.consensus_data.integrated_agreement_score,
+            "n_scores": region.consensus_data.n_scores,
         }
 
         for frame, votes in region.frame_votes.items():

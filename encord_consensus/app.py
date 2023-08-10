@@ -9,9 +9,8 @@ from lib.data_export import export_regions_of_interest
 from lib.data_model import RegionOfInterest
 from lib.data_transformation import prepare_data_for_consensus
 from lib.frame_label_consensus import (
-    calculate_frame_level_integrated_agreement,
+    calculate_frame_level_min_n_agreement,
     find_regions_of_interest,
-    calculate_region_frame_level_integrated_agreement,
     aggregate_by_answer,
 )
 from lib.project_access import (
@@ -182,7 +181,7 @@ if st.session_state.lr_data:
             )
             aggregated_data = aggregate_by_answer(prepared_data)
             st.session_state.fl_integrated_agreement = (
-                calculate_frame_level_integrated_agreement(aggregated_data)
+                calculate_frame_level_min_n_agreement(aggregated_data)
             )
             st.session_state.regions_of_interest = find_regions_of_interest(
                 aggregated_data, total_num_annnotators
@@ -204,28 +203,37 @@ if st.session_state.lr_data:
         key="min_agreement_slider",
     )
     st.slider(
-        "Minimum Score",
+        "Minimum Integrated Agreement Score",
         min_value=0.0,
         max_value=1.0,
         value=0.0,
         step=0.05,
-        key="min_score_slider",
+        key="min_integrated_score_slider",
     )
     for region in st.session_state.regions_of_interest:
         if (
-            region.max_agreement >= st.session_state.min_agreement_slider
-            and region.score >= st.session_state.min_score_slider
+            region.consensus_data.max_agreement >= st.session_state.min_agreement_slider
+            and region.consensus_data.integrated_agreement_score
+            >= st.session_state.min_integrated_score_slider
         ):
             st.checkbox(
                 "Select", on_change=st_select_region, args=(region,), key=hash(region)
             )
-            mini_report = f"Mini Report\nScore: {round(region.score, 2)}\n" + "\n".join(
-                [
-                    f"At least {k} annotators agreeing: {v} frames"
-                    for k, v in calculate_region_frame_level_integrated_agreement(
-                        region
-                    ).items()
-                ]
+            mini_report = (
+                f"Mini Report\nIntegrated Agreement Score: {region.consensus_data.integrated_agreement_score}\n\n"
+                + "\n".join(
+                    [
+                        f"At least {k} annotators agreeing: {v} frames"
+                        for k, v in region.consensus_data.min_n_agreement.items()
+                    ]
+                )
+                + "\n\nN Scores\n"
+                + "\n".join(
+                    [
+                        f"{n}-score: {s}"
+                        for n, s in region.consensus_data.n_scores.items()
+                    ]
+                )
             )
             identifier_text = (
                 f"Region number {region.region_number}\n\nSelected Answers\n"
