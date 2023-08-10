@@ -230,7 +230,7 @@ if st.session_state.lr_data:
                 + "\n\nN Scores\n"
                 + "\n".join(
                     [
-                        f"{n}_score: {s}"
+                        f"{n}-score: {s}"
                         for n, s in region.consensus_data.n_scores.items()
                     ]
                 )
