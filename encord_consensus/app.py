@@ -90,7 +90,7 @@ def st_remove_project(project_hash):
         st.session_state.ontology = {}
 
 
-def set_picker(to_pick: int) -> None:
+def st_set_picker(to_pick: int) -> None:
     if to_pick in st.session_state.pickers_to_show:
         st.session_state.pickers_to_show.remove(to_pick)
     else:
@@ -235,7 +235,7 @@ if st.session_state.lr_data:
             )
             st.button(
                 "Toggle Chart",
-                on_click=set_picker,
+                on_click=st_set_picker,
                 args=(hash(region),),
                 key=f"show_{hash(region)}",
             )
