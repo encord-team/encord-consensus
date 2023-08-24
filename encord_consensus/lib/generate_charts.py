@@ -1,11 +1,10 @@
-from typing import List, Dict
-
-from matplotlib.patches import Rectangle
-from matplotlib.figure import Figure
-
-from lib.data_model import RegionOfInterest
+from typing import Dict, List
 
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.patches import Rectangle
+
+from encord_consensus.lib.data_model import RegionOfInterest
 
 
 def generate_stacked_chart(
@@ -18,9 +17,7 @@ def generate_stacked_chart(
     ax.plot([0, 0], [0, 0])
 
     indexes = {source: selected_projects.index(source) for source in source_boxes}
-    cmap = {
-        source: plt.get_cmap("tab20").colors[idx] for source, idx in indexes.items()
-    }
+    cmap = {source: plt.get_cmap("tab20").colors[idx] for source, idx in indexes.items()}
 
     for source, boxes in source_boxes.items():
         for box in boxes:

@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from typing import Dict, DefaultDict, List
+from typing import DefaultDict, Dict, List
 
 from .data_model import Answer, ClassificationView, FQPart
 
@@ -36,9 +36,7 @@ def prepare_data_for_consensus(ontology, lr_data) -> List[ClassificationView]:
             for cl in labels["classifications"]:
                 if not lookup.get(cl["classificationHash"]):
                     fq_parts = []
-                    classification_answers = lr["classification_answers"][
-                        cl["classificationHash"]
-                    ]
+                    classification_answers = lr["classification_answers"][cl["classificationHash"]]
                     for classification in classification_answers["classifications"]:
                         if len(classification["answers"]) == 1:
                             fq_parts.append(
@@ -57,9 +55,7 @@ def prepare_data_for_consensus(ontology, lr_data) -> List[ClassificationView]:
                             )
                     sorted_fq_parts = sorted(
                         fq_parts,
-                        key=lambda x: get_precedence(
-                            ontology, cl["featureHash"], x.feature_hash
-                        ),
+                        key=lambda x: get_precedence(ontology, cl["featureHash"], x.feature_hash),
                     )
                     fq_name = "&".join([x.fq_part for x in sorted_fq_parts])
                     lookup[cl["classificationHash"]] = Answer(
@@ -73,11 +69,6 @@ def prepare_data_for_consensus(ontology, lr_data) -> List[ClassificationView]:
                 answer = lookup[cl["classificationHash"]]
                 res[answer].append(int(frame))
         out.extend(
-            [
-                ClassificationView(
-                    answer=kv[0], frames=kv[1], source_project_hash=project_hash
-                )
-                for kv in res.items()
-            ]
+            [ClassificationView(answer=kv[0], frames=kv[1], source_project_hash=project_hash) for kv in res.items()]
         )
     return out

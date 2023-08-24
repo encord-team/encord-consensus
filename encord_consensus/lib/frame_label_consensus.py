@@ -1,21 +1,19 @@
 from collections import defaultdict
-from typing import List, DefaultDict, Dict
+from typing import DefaultDict, Dict, List
 
 from .data_model import (
-    Answer,
     AggregatedView,
+    Answer,
     ClassificationView,
-    RegionOfInterest,
     ConsensusData,
+    RegionOfInterest,
 )
 
 
 def aggregate_by_answer(
     prepared_data: List[ClassificationView],
 ) -> List[AggregatedView]:
-    pre_aggregated: DefaultDict[Answer, list[ClassificationView]] = defaultdict(
-        list[ClassificationView]
-    )
+    pre_aggregated: DefaultDict[Answer, list[ClassificationView]] = defaultdict(list[ClassificationView])
     for c in prepared_data:
         pre_aggregated[c.answer].append(c)
     processed_aggregated: List[AggregatedView] = []
@@ -59,9 +57,7 @@ def find_regions_of_interest(
             )
             region.consensus_data = ConsensusData(
                 max_agreement=max(frame_vote_counts.values()),
-                integrated_agreement_score=calculate_integrated_agreement_score(
-                    region, total_num_annotators
-                ),
+                integrated_agreement_score=calculate_integrated_agreement_score(region, total_num_annotators),
                 min_n_agreement=calculate_region_frame_level_min_n_agreement(region),
                 n_scores=calculate_n_scores(region),
             )
@@ -69,29 +65,19 @@ def find_regions_of_interest(
     return regions
 
 
-def calculate_integrated_agreement_score(
-    region: RegionOfInterest, total_num_annotators: int
-) -> float:
+def calculate_integrated_agreement_score(region: RegionOfInterest, total_num_annotators: int) -> float:
     frame_vote_counts = region.frame_vote_counts
     num_frames = 1 + max(frame_vote_counts.keys()) - min(frame_vote_counts.keys())
-    return round(
-        sum(frame_vote_counts.values()) / (total_num_annotators * num_frames), 4
-    )
+    return round(sum(frame_vote_counts.values()) / (total_num_annotators * num_frames), 4)
 
 
 def process_vote_counts(number_of_annotators_agreeing) -> Dict[int, int]:
     max_number_of_annotators_agreeing = max(number_of_annotators_agreeing)
     exact_num_agreed = {
-        num_agreed: number_of_annotators_agreeing.count(num_agreed)
-        for num_agreed in set(number_of_annotators_agreeing)
+        num_agreed: number_of_annotators_agreeing.count(num_agreed) for num_agreed in set(number_of_annotators_agreeing)
     }
     return {
-        n: sum(
-            [
-                exact_num_agreed[num_agreed]
-                for num_agreed in range(n, max_number_of_annotators_agreeing + 1)
-            ]
-        )
+        n: sum([exact_num_agreed[num_agreed] for num_agreed in range(n, max_number_of_annotators_agreeing + 1)])
         for n in exact_num_agreed.keys()
     }
 
@@ -101,9 +87,7 @@ def calculate_frame_level_min_n_agreement(
 ) -> Dict[int, int]:
     number_of_annotators_agreeing = []
     for agg_view in aggregated_data:
-        number_of_annotators_agreeing.extend(
-            [len(v) for v in agg_view.frame_votes.values()]
-        )
+        number_of_annotators_agreeing.extend([len(v) for v in agg_view.frame_votes.values()])
     return process_vote_counts(number_of_annotators_agreeing)
 
 
@@ -118,7 +102,5 @@ def calculate_n_scores(region: RegionOfInterest) -> Dict[int, float]:
     n_scores = {}
     total_num_annotators = max(frame_level_min_n_agreement.keys())
     for n in range(2, total_num_annotators + 1):
-        n_scores[n] = round(
-            frame_level_min_n_agreement[n] / frame_level_min_n_agreement[1], 4
-        )
+        n_scores[n] = round(frame_level_min_n_agreement[n] / frame_level_min_n_agreement[1], 4)
     return n_scores

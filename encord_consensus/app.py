@@ -4,24 +4,23 @@ import os
 
 import streamlit as st
 from dotenv import load_dotenv
-
 from lib.data_export import export_regions_of_interest
 from lib.data_model import RegionOfInterest
 from lib.data_transformation import prepare_data_for_consensus
 from lib.frame_label_consensus import (
+    aggregate_by_answer,
     calculate_frame_level_min_n_agreement,
     find_regions_of_interest,
-    aggregate_by_answer,
 )
 from lib.generate_charts import generate_stacked_chart
 from lib.project_access import (
-    get_user_client,
-    list_projects,
-    get_classifications_ontology,
     count_label_rows,
-    list_all_data_rows,
     download_data_hash_data_from_projects,
     get_all_datasets,
+    get_classifications_ontology,
+    get_user_client,
+    list_all_data_rows,
+    list_projects,
 )
 
 load_dotenv(encoding="utf-8")
@@ -53,29 +52,18 @@ if "pickers_to_show" not in st.session_state:
 
 def st_add_project(project_hash, project_title):
     datasets = get_all_datasets(app_user_client, project_hash)
-    if count_label_rows(app_user_client, project_hash) != len(
-        list_all_data_rows(app_user_client, datasets)
-    ):
-        st.warning(
-            "You must select projects where all label rows are annotated!", icon="⚠️"
-        )
+    if count_label_rows(app_user_client, project_hash) != len(list_all_data_rows(app_user_client, datasets)):
+        st.warning("You must select projects where all label rows are annotated!", icon="⚠️")
         return
 
     if not st.session_state.selected_projects:
         st.session_state.attached_datasets = datasets
     elif datasets != st.session_state.attached_datasets:
-        st.warning(
-            "You must select projects with the same attached datasets!", icon="⚠️"
-        )
+        st.warning("You must select projects with the same attached datasets!", icon="⚠️")
         return
     if not st.session_state.ontology:
-        st.session_state.ontology = get_classifications_ontology(
-            app_user_client, project_hash
-        )
-    elif (
-        get_classifications_ontology(app_user_client, project_hash)
-        != st.session_state.ontology
-    ):
+        st.session_state.ontology = get_classifications_ontology(app_user_client, project_hash)
+    elif get_classifications_ontology(app_user_client, project_hash) != st.session_state.ontology:
         st.warning("You must select projects with the same ontology!", icon="⚠️")
         return
 
@@ -145,12 +133,8 @@ if not st.session_state.selected_data_hash:
     for p_hash in st.session_state.selected_projects:
         emp = st.empty()
         col1, col2 = emp.columns([9, 3])
-        col1.markdown(
-            st.session_state.project_title_lookup[p_hash], unsafe_allow_html=True
-        )
-        col2.button(
-            "Remove", key=f"del_{p_hash}", on_click=st_remove_project, args=(p_hash,)
-        )
+        col1.markdown(st.session_state.project_title_lookup[p_hash], unsafe_allow_html=True)
+        col2.button("Remove", key=f"del_{p_hash}", on_click=st_remove_project, args=(p_hash,))
 
     st.write("## Select Data Row to run consensus on")
 else:
@@ -186,24 +170,16 @@ if st.session_state.lr_data:
     total_num_annnotators = len(st.session_state.selected_projects)
     if not st.session_state.consensus_has_been_calculated:
         with st.spinner("Processing data..."):
-            prepared_data = prepare_data_for_consensus(
-                st.session_state.ontology, st.session_state.lr_data
-            )
+            prepared_data = prepare_data_for_consensus(st.session_state.ontology, st.session_state.lr_data)
             aggregated_data = aggregate_by_answer(prepared_data)
-            st.session_state.fl_integrated_agreement = (
-                calculate_frame_level_min_n_agreement(aggregated_data)
-            )
-            st.session_state.regions_of_interest = find_regions_of_interest(
-                aggregated_data, total_num_annnotators
-            )
+            st.session_state.fl_integrated_agreement = calculate_frame_level_min_n_agreement(aggregated_data)
+            st.session_state.regions_of_interest = find_regions_of_interest(aggregated_data, total_num_annnotators)
             st.session_state.consensus_has_been_calculated = True
     st.write("## Consensus Section")
     st.write("### Consensus Agreement Report")
     st.bar_chart(st.session_state.fl_integrated_agreement)
     st.write("### Demo Consensus Analysis Tool")
-    st.write(
-        f"There are a total of {total_num_annnotators} annotators that could agree."
-    )
+    st.write(f"There are a total of {total_num_annnotators} annotators that could agree.")
     st.slider(
         "Minimum Agreement",
         min_value=1,
@@ -224,8 +200,7 @@ if st.session_state.lr_data:
     for region in st.session_state.regions_of_interest:
         if (
             region.consensus_data.max_agreement >= st.session_state.min_agreement_slider
-            and region.consensus_data.integrated_agreement_score
-            >= st.session_state.min_integrated_score_slider
+            and region.consensus_data.integrated_agreement_score >= st.session_state.min_integrated_score_slider
         ):
             st.checkbox(
                 "Select",
@@ -249,16 +224,9 @@ if st.session_state.lr_data:
                     ]
                 )
                 + "\n\nN Scores\n"
-                + "\n".join(
-                    [
-                        f"{n}-score: {s}"
-                        for n, s in region.consensus_data.n_scores.items()
-                    ]
-                )
+                + "\n".join([f"{n}-score: {s}" for n, s in region.consensus_data.n_scores.items()])
             )
-            identifier_text = (
-                f"Region number {region.region_number}\n\nSelected Answers\n"
-            )
+            identifier_text = f"Region number {region.region_number}\n\nSelected Answers\n"
             for idx, part in enumerate(region.answer.fq_parts):
                 identifier_text += (idx * "\t") + f"{part.question}: {part.answer}\n"
             st.code(f"{identifier_text}\n{mini_report}")
@@ -275,14 +243,9 @@ if st.session_state.lr_data:
                 st.pyplot(fig)
 
     st.write("### Export")
-    st.write(
-        f"There are a total of {len(st.session_state.regions_to_export)} regions to export."
-    )
+    st.write(f"There are a total of {len(st.session_state.regions_to_export)} regions to export.")
 
-    if (
-        st.button("Prepare Export", on_click=prepare_export)
-        and st.session_state.data_export
-    ):
+    if st.button("Prepare Export", on_click=prepare_export) and st.session_state.data_export:
         st.write("Your export is ready to download!")
         st.download_button(
             label="Download Export",
