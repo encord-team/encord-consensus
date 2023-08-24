@@ -13,6 +13,7 @@ from lib.frame_label_consensus import (
     find_regions_of_interest,
     aggregate_by_answer,
 )
+from lib.generate_charts import generate_stacked_chart
 from lib.project_access import (
     get_user_client,
     list_projects,
@@ -46,6 +47,8 @@ if "regions_to_export" not in st.session_state:
     st.session_state.regions_to_export = set()
 if "data_export" not in st.session_state:
     st.session_state.data_export = {}
+if "pickers_to_show" not in st.session_state:
+    st.session_state.pickers_to_show = set()
 
 
 def st_add_project(project_hash, project_title):
@@ -85,6 +88,13 @@ def st_remove_project(project_hash):
     if not st.session_state.selected_projects:
         st.session_state.attached_datasets = []
         st.session_state.ontology = {}
+
+
+def st_set_picker(to_pick: int) -> None:
+    if to_pick in st.session_state.pickers_to_show:
+        st.session_state.pickers_to_show.remove(to_pick)
+    else:
+        st.session_state.pickers_to_show.add(to_pick)
 
 
 def st_select_region(region: RegionOfInterest):
@@ -210,6 +220,7 @@ if st.session_state.lr_data:
         step=0.05,
         key="min_integrated_score_slider",
     )
+
     for region in st.session_state.regions_of_interest:
         if (
             region.consensus_data.max_agreement >= st.session_state.min_agreement_slider
@@ -217,8 +228,18 @@ if st.session_state.lr_data:
             >= st.session_state.min_integrated_score_slider
         ):
             st.checkbox(
-                "Select", on_change=st_select_region, args=(region,), key=hash(region)
+                "Select",
+                on_change=st_select_region,
+                args=(region,),
+                key=f"select_{hash(region)}",
             )
+            st.button(
+                "Toggle Chart",
+                on_click=st_set_picker,
+                args=(hash(region),),
+                key=f"show_{hash(region)}",
+            )
+
             mini_report = (
                 f"Mini Report\nIntegrated Agreement Score: {region.consensus_data.integrated_agreement_score}\n\n"
                 + "\n".join(
@@ -241,7 +262,17 @@ if st.session_state.lr_data:
             for idx, part in enumerate(region.answer.fq_parts):
                 identifier_text += (idx * "\t") + f"{part.question}: {part.answer}\n"
             st.code(f"{identifier_text}\n{mini_report}")
-            st.bar_chart(region.frame_vote_counts)
+
+            if hash(region) not in st.session_state.pickers_to_show:
+                st.bar_chart(region.frame_vote_counts)
+
+            if hash(region) in st.session_state.pickers_to_show:
+                fig = generate_stacked_chart(
+                    region,
+                    st.session_state.selected_projects,
+                    st.session_state.project_title_lookup,
+                )
+                st.pyplot(fig)
 
     st.write("### Export")
     st.write(
