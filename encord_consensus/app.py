@@ -4,6 +4,8 @@ import os
 
 import streamlit as st
 from dotenv import load_dotenv
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 
 from lib.data_export import export_regions_of_interest
 from lib.data_model import RegionOfInterest
@@ -46,6 +48,8 @@ if "regions_to_export" not in st.session_state:
     st.session_state.regions_to_export = set()
 if "data_export" not in st.session_state:
     st.session_state.data_export = {}
+if "pickers_to_show" not in st.session_state:
+    st.session_state.pickers_to_show = set()
 
 
 def st_add_project(project_hash, project_title):
@@ -210,6 +214,13 @@ if st.session_state.lr_data:
         step=0.05,
         key="min_integrated_score_slider",
     )
+
+    def set_picker(to_pick: int) -> None:
+        if to_pick in st.session_state.pickers_to_show:
+            st.session_state.pickers_to_show.remove(to_pick)
+        else:
+            st.session_state.pickers_to_show.add(to_pick)
+
     for region in st.session_state.regions_of_interest:
         if (
             region.consensus_data.max_agreement >= st.session_state.min_agreement_slider
@@ -217,8 +228,18 @@ if st.session_state.lr_data:
             >= st.session_state.min_integrated_score_slider
         ):
             st.checkbox(
-                "Select", on_change=st_select_region, args=(region,), key=hash(region)
+                "Select",
+                on_change=st_select_region,
+                args=(region,),
+                key=f"select_{hash(region)}",
             )
+            st.button(
+                "Toggle Chart",
+                on_click=set_picker,
+                args=(hash(region),),
+                key=f"show_{hash(region)}",
+            )
+
             mini_report = (
                 f"Mini Report\nIntegrated Agreement Score: {region.consensus_data.integrated_agreement_score}\n\n"
                 + "\n".join(
@@ -241,7 +262,46 @@ if st.session_state.lr_data:
             for idx, part in enumerate(region.answer.fq_parts):
                 identifier_text += (idx * "\t") + f"{part.question}: {part.answer}\n"
             st.code(f"{identifier_text}\n{mini_report}")
-            st.bar_chart(region.frame_vote_counts)
+
+            if hash(region) not in st.session_state.pickers_to_show:
+                st.bar_chart(region.frame_vote_counts)
+
+            if hash(region) in st.session_state.pickers_to_show:
+                source_boxes = region.ranges_by_source
+                fig, ax = plt.subplots()
+                ax.plot([0, 0], [0, 0])
+
+                indexes = {
+                    source: st.session_state.selected_projects.index(source)
+                    for source in source_boxes
+                }
+                cmap = {
+                    source: plt.get_cmap("tab20").colors[idx]
+                    for source, idx in indexes.items()
+                }
+
+                for source, boxes in source_boxes.items():
+                    for box in boxes:
+                        ax.add_patch(
+                            Rectangle(
+                                (box[0], indexes[source]),
+                                box[1] - box[0],
+                                0.7,
+                                color=cmap[source],
+                                alpha=0.4,
+                            )
+                        )
+                plt.xlim(
+                    max(min(region.frame_votes) - 5, 0), max(region.frame_votes) + 5
+                )
+                plt.ylim(-1, len(indexes) + 1)
+                ax.set_xlabel("Frame Number")
+                ax.set_ylabel("Project")
+                ax.set_yticks(
+                    [idx + 0.4 for idx in indexes.values()],
+                    [st.session_state.project_title_lookup[k] for k in indexes.keys()],
+                )
+                st.pyplot(fig)
 
     st.write("### Export")
     st.write(
