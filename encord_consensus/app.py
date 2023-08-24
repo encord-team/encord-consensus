@@ -4,6 +4,7 @@ import os
 
 import streamlit as st
 from dotenv import load_dotenv
+from encord.constants.enums import DataType
 from lib.data_export import export_regions_of_interest
 from lib.data_model import RegionOfInterest
 from lib.data_transformation import prepare_data_for_consensus
@@ -22,6 +23,8 @@ from lib.project_access import (
     list_all_data_rows,
     list_projects,
 )
+
+SUPPORTED_DATA_FORMATS = [DataType.VIDEO]
 
 load_dotenv(encoding="utf-8")
 app_user_client = get_user_client(os.getenv("ENCORD_KEYFILE"))
@@ -150,7 +153,9 @@ def st_select_data_hash(data_hash, data_title):
 
 
 if not st.session_state.selected_data_hash:
-    for dr in list_all_data_rows(app_user_client, st.session_state.attached_datasets):
+    for dr in list_all_data_rows(
+        app_user_client, st.session_state.attached_datasets, data_types=SUPPORTED_DATA_FORMATS
+    ):
         emp = st.empty()
         col1, col2 = emp.columns([9, 3])
         col1.markdown(dr.title, unsafe_allow_html=True)
