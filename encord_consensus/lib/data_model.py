@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Dict, DefaultDict
+from typing import List, Dict, DefaultDict, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -56,3 +56,18 @@ class RegionOfInterest(BaseModel):
 
     def __hash__(self) -> int:
         return hash(hash(self.answer) + self.region_number)
+
+    @property
+    def ranges_by_source(self) -> DefaultDict[str, List[Tuple[int, int]]]:
+        res = defaultdict(list)
+        start_frame_by_source = {}
+        for frame, votes in self.frame_votes.items():
+            for source in votes:
+                if source not in start_frame_by_source:
+                    start_frame_by_source[source] = frame
+                if source not in self.frame_votes.get(frame + 1, []):
+                    res[source].append(
+                        (start_frame_by_source.get(source, frame), frame)
+                    )
+                    del start_frame_by_source[source]
+        return res
