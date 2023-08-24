@@ -1,4 +1,4 @@
-from typing import List, Dict, Set
+from typing import Dict, List, Set
 
 from .data_model import RegionOfInterest
 
@@ -55,11 +55,7 @@ def export_regions_of_interest(
                 "voteCount": len(votes),
             }
             if not export_dict["data_units"][data_hash]["labels"].get(frame):
-                export_dict["data_units"][data_hash]["labels"][frame] = [
-                    classification_entry
-                ]
+                export_dict["data_units"][data_hash]["labels"][frame] = [classification_entry]
             else:
-                export_dict["data_units"][data_hash]["labels"][frame].append(
-                    classification_entry
-                )
+                export_dict["data_units"][data_hash]["labels"][frame].append(classification_entry)
     return export_dict

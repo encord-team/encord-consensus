@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Dict, DefaultDict, Tuple
+from typing import DefaultDict, Dict, List, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -66,8 +66,6 @@ class RegionOfInterest(BaseModel):
                 if source not in start_frame_by_source:
                     start_frame_by_source[source] = frame
                 if source not in self.frame_votes.get(frame + 1, []):
-                    res[source].append(
-                        (start_frame_by_source.get(source, frame), frame)
-                    )
+                    res[source].append((start_frame_by_source.get(source, frame), frame))
                     del start_frame_by_source[source]
         return res
