@@ -1,6 +1,7 @@
 from typing import List, Dict
 
 from matplotlib.patches import Rectangle
+from matplotlib.figure import Figure
 
 from lib.data_model import RegionOfInterest
 
@@ -11,7 +12,7 @@ def generate_stacked_chart(
     region: RegionOfInterest,
     selected_projects: List[str],
     project_title_lookup: Dict[str, str],
-):
+) -> Figure:
     source_boxes = region.ranges_by_source
     fig, ax = plt.subplots()
     ax.plot([0, 0], [0, 0])
