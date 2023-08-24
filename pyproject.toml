@@ -19,6 +19,7 @@ encord = "0.1.83"
 streamlit = "1.23.1"
 pydantic = "2.0.3"
 python-dotenv = "^1.0.0"
+matplotlib = "^3.7.2"
 
 
 [tool.poetry.group.dev.dependencies]
