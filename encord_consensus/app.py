@@ -91,6 +91,13 @@ def st_remove_project(project_hash):
         st.session_state.ontology = {}
 
 
+def set_picker(to_pick: int) -> None:
+    if to_pick in st.session_state.pickers_to_show:
+        st.session_state.pickers_to_show.remove(to_pick)
+    else:
+        st.session_state.pickers_to_show.add(to_pick)
+
+
 def st_select_region(region: RegionOfInterest):
     region_hash = hash(region)
     if region_hash not in st.session_state.regions_to_export:
@@ -214,12 +221,6 @@ if st.session_state.lr_data:
         step=0.05,
         key="min_integrated_score_slider",
     )
-
-    def set_picker(to_pick: int) -> None:
-        if to_pick in st.session_state.pickers_to_show:
-            st.session_state.pickers_to_show.remove(to_pick)
-        else:
-            st.session_state.pickers_to_show.add(to_pick)
 
     for region in st.session_state.regions_of_interest:
         if (
