@@ -4,8 +4,6 @@ import os
 
 import streamlit as st
 from dotenv import load_dotenv
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 
 from lib.data_export import export_regions_of_interest
 from lib.data_model import RegionOfInterest
@@ -15,6 +13,7 @@ from lib.frame_label_consensus import (
     find_regions_of_interest,
     aggregate_by_answer,
 )
+from lib.generate_charts import generate_stacked_chart
 from lib.project_access import (
     get_user_client,
     list_projects,
@@ -268,39 +267,10 @@ if st.session_state.lr_data:
                 st.bar_chart(region.frame_vote_counts)
 
             if hash(region) in st.session_state.pickers_to_show:
-                source_boxes = region.ranges_by_source
-                fig, ax = plt.subplots()
-                ax.plot([0, 0], [0, 0])
-
-                indexes = {
-                    source: st.session_state.selected_projects.index(source)
-                    for source in source_boxes
-                }
-                cmap = {
-                    source: plt.get_cmap("tab20").colors[idx]
-                    for source, idx in indexes.items()
-                }
-
-                for source, boxes in source_boxes.items():
-                    for box in boxes:
-                        ax.add_patch(
-                            Rectangle(
-                                (box[0], indexes[source]),
-                                box[1] - box[0],
-                                0.7,
-                                color=cmap[source],
-                                alpha=0.4,
-                            )
-                        )
-                plt.xlim(
-                    max(min(region.frame_votes) - 5, 0), max(region.frame_votes) + 5
-                )
-                plt.ylim(-1, len(indexes) + 1)
-                ax.set_xlabel("Frame Number")
-                ax.set_ylabel("Project")
-                ax.set_yticks(
-                    [idx + 0.4 for idx in indexes.values()],
-                    [st.session_state.project_title_lookup[k] for k in indexes.keys()],
+                fig = generate_stacked_chart(
+                    region,
+                    st.session_state.selected_projects,
+                    st.session_state.project_title_lookup,
                 )
                 st.pyplot(fig)
 
