@@ -1,15 +1,15 @@
-import os
-import site
 import sys
+from pathlib import Path
 
 from streamlit.web import cli as stcli
 
 
 def launch():
-    site_packages = site.getsitepackages().pop()
-    sys.argv = [
-        "streamlit",
-        "run",
-        os.path.join(site_packages, "encord_consensus", "app.py"),
-    ]
+    streamlit_page = (Path(__file__).parent / "app.py").expanduser().resolve()
+    sys.argv = ["streamlit", "run", streamlit_page.as_posix()]
+
     sys.exit(stcli.main())
+
+
+if __name__ == "__main__":
+    launch()
