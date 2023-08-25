@@ -13,7 +13,7 @@ from lib.frame_label_consensus import (
     calculate_frame_level_min_n_agreement,
     find_regions_of_interest,
 )
-from lib.generate_charts import generate_stacked_chart, get_bar_chart
+from lib.generate_charts import generate_stacked_chart, get_bar_chart, get_line_chart
 from lib.project_access import (
     count_label_rows,
     download_data_hash_data_from_projects,
@@ -245,7 +245,15 @@ if st.session_state.lr_data:
             st.code(f"{identifier_text}\n{mini_report}")
 
             if hash(region) not in st.session_state.pickers_to_show:
-                st.bar_chart(region.frame_vote_counts)
+                st.altair_chart(
+                    get_line_chart(
+                        region.frame_vote_counts,
+                        title="Agreement on the Consensus Label within its Region of Interest",
+                        x_title="Timeline frames",
+                        y_title="Concurring  annotators",
+                    ),
+                    use_container_width=True,
+                )
 
             if hash(region) in st.session_state.pickers_to_show:
                 fig = generate_stacked_chart(

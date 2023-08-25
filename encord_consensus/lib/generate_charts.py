@@ -58,3 +58,23 @@ def get_bar_chart(data: dict, title: str, x_title: str, y_title: str) -> alt_api
         labelFontSize=20,
         titleFontSize=20,
     )
+
+
+def get_line_chart(data: dict, title: str, x_title: str, y_title: str) -> alt_api.Chart:
+    data_df = pd.DataFrame({"x": list(data.keys()), "y": list(data.values())})
+    data_df["diff"] = data_df["y"].diff().fillna(0)
+    data_df["segment"] = (data_df["diff"] != 0).cumsum()
+
+    base = alt.Chart(data_df, title=alt.Title(title, fontSize=24, anchor=alt.TitleAnchor("middle")),).encode(
+        alt.X("x").title(x_title).type("ordinal"),
+        alt.Y("y").title(y_title).type("quantitative").axis(format="d"),
+        tooltip=[alt.Tooltip("x").title(x_title), alt.Tooltip("y").title(y_title)],  # Hide `segment` from the tooltip
+    )
+
+    chart = base.mark_line(point=True).encode(detail="segment") + base.mark_line(strokeDash=[5, 5])
+
+    return chart.configure_axis(
+        labelAngle=0,  # Display axis labels horizontally
+        labelFontSize=20,
+        titleFontSize=20,
+    )
