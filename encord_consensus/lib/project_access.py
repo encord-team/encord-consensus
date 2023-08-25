@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Dict, List, Set, Union
+from typing import Dict, List, Optional, Set, Union
 
 from encord import EncordUserClient, Project
+from encord.constants.enums import DataType
 
 
 def get_user_client(path_to_keyfile: str) -> EncordUserClient:
@@ -33,10 +34,14 @@ def count_label_rows(user_client: EncordUserClient, project_hash: str) -> int:
     return len(label_hashes)
 
 
-def list_all_data_rows(user_client: EncordUserClient, dataset_hashes: Union[Set[str], List[str]]) -> List:
+def list_all_data_rows(
+    user_client: EncordUserClient,
+    dataset_hashes: Union[Set[str], List[str]],
+    data_types: Optional[List[DataType]] = None,
+) -> List:
     res = []
     for dataset_hash in dataset_hashes:
-        res.extend(user_client.get_dataset(dataset_hash).list_data_rows())
+        res.extend(user_client.get_dataset(dataset_hash).list_data_rows(data_types=data_types))
     return res
 
 
