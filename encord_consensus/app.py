@@ -13,7 +13,7 @@ from lib.frame_label_consensus import (
     calculate_frame_level_min_n_agreement,
     find_regions_of_interest,
 )
-from lib.generate_charts import generate_stacked_chart
+from lib.generate_charts import generate_stacked_chart, get_bar_chart
 from lib.project_access import (
     count_label_rows,
     download_data_hash_data_from_projects,
@@ -182,7 +182,15 @@ if st.session_state.lr_data:
             st.session_state.consensus_has_been_calculated = True
     st.write("## Consensus Section")
     st.write("### Consensus Agreement Report")
-    st.bar_chart(st.session_state.fl_integrated_agreement)
+    st.altair_chart(
+        get_bar_chart(
+            st.session_state.fl_integrated_agreement,
+            title="Consensus on Annotations by Number of Contributors",
+            x_title="Agreeing annotators",
+            y_title="Number of annotations",
+        ),
+        use_container_width=True,
+    )
     st.write("### Demo Consensus Analysis Tool")
     st.write(f"There are a total of {total_num_annnotators} annotators that could agree.")
     st.slider(

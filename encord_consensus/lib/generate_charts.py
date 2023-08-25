@@ -1,6 +1,9 @@
 from typing import Dict, List
 
+import altair as alt
+import altair.vegalite.v5.api as alt_api
 import matplotlib.pyplot as plt
+import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
@@ -39,3 +42,19 @@ def generate_stacked_chart(
         [project_title_lookup[k] for k in indexes.keys()],
     )
     return fig
+
+
+def get_bar_chart(data: dict, title: str, x_title: str, y_title: str) -> alt_api.Chart:
+    data_df = pd.DataFrame({x_title: list(data.keys()), y_title: list(data.values())})
+    chart = alt.Chart(
+        data_df,
+        title=alt.Title(title, fontSize=24, anchor=alt.TitleAnchor("middle")),
+    ).mark_bar()
+    return chart.encode(
+        alt.X(x_title).title(x_title).type("ordinal"),
+        alt.Y(y_title).title(y_title).type("quantitative"),
+    ).configure_axis(
+        labelAngle=0,  # Display axis labels horizontally
+        labelFontSize=20,
+        titleFontSize=20,
+    )
