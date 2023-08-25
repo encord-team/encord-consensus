@@ -186,7 +186,7 @@ if st.session_state.lr_data:
         get_bar_chart(
             st.session_state.fl_integrated_agreement,
             title="Consensus on Annotations by Number of Contributors",
-            x_title="Agreeing annotators",
+            x_title="Concurring annotators",
             y_title="Number of annotations",
         ),
         use_container_width=True,
