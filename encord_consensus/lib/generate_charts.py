@@ -55,7 +55,7 @@ def get_bar_chart(data: dict, title: str, x_title: str, y_title: str) -> alt_api
         alt.Y(y_title).title(y_title).type("quantitative"),
     ).configure_axis(
         labelAngle=0,  # Display axis labels horizontally
-        labelFontSize=20,
+        labelFontSize=16,
         titleFontSize=20,
     )
 
@@ -64,10 +64,11 @@ def get_line_chart(data: dict, title: str, x_title: str, y_title: str) -> alt_ap
     data_df = pd.DataFrame({"x": list(data.keys()), "y": list(data.values())})
     data_df["diff"] = data_df["y"].diff().fillna(0)
     data_df["segment"] = (data_df["diff"] != 0).cumsum()
+    max_y = data_df["y"].max(skipna=True)
 
-    base = alt.Chart(data_df, title=alt.Title(title, fontSize=24, anchor=alt.TitleAnchor("middle")),).encode(
-        alt.X("x").title(x_title).type("ordinal"),
-        alt.Y("y").title(y_title).type("quantitative").axis(format="d"),
+    base = alt.Chart(data_df, title=alt.Title(title, fontSize=24, anchor=alt.TitleAnchor("middle"))).encode(
+        alt.X("x").title(x_title).type("quantitative").axis(format="d"),
+        alt.Y("y").title(y_title).type("quantitative").scale(domainMax=max_y + 1).axis(format="d"),
         tooltip=[alt.Tooltip("x").title(x_title), alt.Tooltip("y").title(y_title)],  # Hide `segment` from the tooltip
     )
 
@@ -75,7 +76,7 @@ def get_line_chart(data: dict, title: str, x_title: str, y_title: str) -> alt_ap
 
     return chart.configure_axis(
         labelAngle=0,  # Display axis labels horizontally
-        labelFontSize=20,
+        labelFontSize=16,
         titleFontSize=20,
     )
 

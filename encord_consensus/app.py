@@ -253,10 +253,10 @@ if st.session_state.lr_data:
                 st.altair_chart(
                     get_line_chart(
                         region.frame_vote_counts,
-                        title="Agreement on the Consensus Label within its Region of Interest",
+                        title="Agreement on the Consensus Label (Count per Frame)",
                         x_title="Timeline frames",
                         y_title="Concurring  annotators",
-                    ),
+                    ).interactive(bind_y=False),
                     use_container_width=True,
                 )
 
