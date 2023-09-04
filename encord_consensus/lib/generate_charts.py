@@ -78,3 +78,57 @@ def get_line_chart(data: dict, title: str, x_title: str, y_title: str) -> alt_ap
         labelFontSize=20,
         titleFontSize=20,
     )
+
+
+def get_label_occurrence_per_frame_chart(
+    region: RegionOfInterest,
+    project_title_lookup: dict[str, str],
+) -> alt_api.Chart:
+    source_boxes = region.ranges_by_source
+
+    raw_data = []
+    # Extract projects' data points from the region of interest
+    for proj_hash, matching_consensus_intervals in source_boxes.items():
+        if len(matching_consensus_intervals) == 0:
+            raw_data.append({"Project": project_title_lookup[proj_hash], "Start": None, "End": None})
+            continue
+        for start, end in matching_consensus_intervals:
+            raw_data.append({"Project": project_title_lookup[proj_hash], "Start": start, "End": end})
+
+    data = pd.DataFrame(raw_data)
+    min_start = data["Start"].min(skipna=True)
+    max_end = data["End"].max(skipna=True)
+
+    # Create a bar chart (lines) to represent intervals
+    chart_title = "Agreement on the Consensus Label (Project View)"
+    lines = (
+        alt.Chart(data, title=alt.Title(chart_title, fontSize=24, anchor=alt.TitleAnchor("middle")))
+        .mark_bar(invalid=None)
+        .encode(
+            alt.X("Start").title("Timeline Frames").scale(domain=[max(min_start - 1, 0), max_end + 1]).axis(format="d"),
+            alt.X2("End"),
+            alt.Y("Project").scale(padding=0.2).axis(labelLimit=200),
+            color="Project",
+            tooltip=[alt.Tooltip(field_name) for field_name in data.columns],
+        )
+    )
+
+    #  Create a scatter plot (points) to represent intervals with Start = End
+    points_data = data[data["Start"] == data["End"]]
+    points = (
+        alt.Chart(points_data)
+        .mark_point(size=50, filled=True)
+        .encode(
+            alt.X("Start"),
+            alt.Y("Project"),
+            color="Project",
+            tooltip=[alt.Tooltip(field_name) for field_name in points_data.columns],
+        )
+    )
+
+    # Combine the lines and points charts and configure axis labels and titles
+    chart = lines + points
+    return chart.configure_axis(
+        labelFontSize=16,
+        titleFontSize=20,
+    )

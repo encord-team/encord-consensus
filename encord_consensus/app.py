@@ -13,7 +13,12 @@ from lib.frame_label_consensus import (
     calculate_frame_level_min_n_agreement,
     find_regions_of_interest,
 )
-from lib.generate_charts import generate_stacked_chart, get_bar_chart, get_line_chart
+from lib.generate_charts import (
+    generate_stacked_chart,
+    get_bar_chart,
+    get_label_occurrence_per_frame_chart,
+    get_line_chart,
+)
 from lib.project_access import (
     count_label_rows,
     download_data_hash_data_from_projects,
@@ -256,12 +261,13 @@ if st.session_state.lr_data:
                 )
 
             if hash(region) in st.session_state.pickers_to_show:
-                fig = generate_stacked_chart(
-                    region,
-                    st.session_state.selected_projects,
-                    st.session_state.project_title_lookup,
+                st.altair_chart(
+                    get_label_occurrence_per_frame_chart(
+                        region,
+                        st.session_state.project_title_lookup,
+                    ).interactive(bind_y=False),
+                    use_container_width=True,
                 )
-                st.pyplot(fig)
 
     st.write("### Export")
     st.write(f"There are a total of {len(st.session_state.regions_to_export)} regions to export.")
