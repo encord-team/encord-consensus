@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import warnings
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -13,7 +14,12 @@ from lib.frame_label_consensus import (
     calculate_frame_level_min_n_agreement,
     find_regions_of_interest,
 )
-from lib.generate_charts import generate_stacked_chart
+from lib.generate_charts import (
+    generate_stacked_chart,
+    get_bar_chart,
+    get_consensus_label_agreement_project_view_chart,
+    get_line_chart,
+)
 from lib.project_access import (
     count_label_rows,
     download_data_hash_data_from_projects,
@@ -23,6 +29,8 @@ from lib.project_access import (
     list_all_data_rows,
     list_projects,
 )
+
+warnings.filterwarnings("error", category=UserWarning)
 
 SUPPORTED_DATA_FORMATS = [DataType.VIDEO]
 
@@ -182,7 +190,15 @@ if st.session_state.lr_data:
             st.session_state.consensus_has_been_calculated = True
     st.write("## Consensus Section")
     st.write("### Consensus Agreement Report")
-    st.bar_chart(st.session_state.fl_integrated_agreement)
+    st.altair_chart(
+        get_bar_chart(
+            st.session_state.fl_integrated_agreement,
+            title="Consensus on Annotations by Number of Contributors",
+            x_title="Concurring annotators",
+            y_title="Number of annotations",
+        ),
+        use_container_width=True,
+    )
     st.write("### Demo Consensus Analysis Tool")
     st.write(f"There are a total of {total_num_annnotators} annotators that could agree.")
     st.slider(
@@ -237,15 +253,20 @@ if st.session_state.lr_data:
             st.code(f"{identifier_text}\n{mini_report}")
 
             if hash(region) not in st.session_state.pickers_to_show:
-                st.bar_chart(region.frame_vote_counts)
+                st.altair_chart(
+                    get_line_chart(
+                        region.frame_vote_counts,
+                        title="Agreement on the Consensus Label (Count per Frame)",
+                        x_title="Timeline frames",
+                        y_title="Concurring  annotators",
+                    ).interactive(bind_y=False),
+                    use_container_width=True,
+                )
 
             if hash(region) in st.session_state.pickers_to_show:
-                fig = generate_stacked_chart(
-                    region,
-                    st.session_state.selected_projects,
-                    st.session_state.project_title_lookup,
-                )
-                st.pyplot(fig)
+                chart = get_consensus_label_agreement_project_view_chart(region, st.session_state.project_title_lookup)
+                if chart is not None:
+                    st.altair_chart(chart.interactive(bind_y=False), use_container_width=True)
 
     st.write("### Export")
     st.write(f"There are a total of {len(st.session_state.regions_to_export)} regions to export.")
