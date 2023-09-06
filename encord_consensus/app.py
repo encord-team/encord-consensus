@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import warnings
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -16,7 +17,7 @@ from lib.frame_label_consensus import (
 from lib.generate_charts import (
     generate_stacked_chart,
     get_bar_chart,
-    get_label_occurrence_per_frame_chart,
+    get_consensus_label_agreement_project_view_chart,
     get_line_chart,
 )
 from lib.project_access import (
@@ -28,6 +29,8 @@ from lib.project_access import (
     list_all_data_rows,
     list_projects,
 )
+
+warnings.filterwarnings("error", category=UserWarning)
 
 SUPPORTED_DATA_FORMATS = [DataType.VIDEO]
 
@@ -261,13 +264,9 @@ if st.session_state.lr_data:
                 )
 
             if hash(region) in st.session_state.pickers_to_show:
-                st.altair_chart(
-                    get_label_occurrence_per_frame_chart(
-                        region,
-                        st.session_state.project_title_lookup,
-                    ).interactive(bind_y=False),
-                    use_container_width=True,
-                )
+                chart = get_consensus_label_agreement_project_view_chart(region, st.session_state.project_title_lookup)
+                if chart is not None:
+                    st.altair_chart(chart.interactive(bind_y=False), use_container_width=True)
 
     st.write("### Export")
     st.write(f"There are a total of {len(st.session_state.regions_to_export)} regions to export.")

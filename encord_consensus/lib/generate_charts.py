@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import altair as alt
 import altair.vegalite.v5.api as alt_api
@@ -81,10 +81,10 @@ def get_line_chart(data: dict, title: str, x_title: str, y_title: str) -> alt_ap
     )
 
 
-def get_label_occurrence_per_frame_chart(
+def get_consensus_label_agreement_project_view_chart(
     region: RegionOfInterest,
     project_title_lookup: dict[str, str],
-) -> alt_api.Chart:
+) -> Optional[alt_api.Chart]:
     source_boxes = region.ranges_by_source
 
     raw_data = []
@@ -96,6 +96,10 @@ def get_label_occurrence_per_frame_chart(
         for start, end in matching_consensus_intervals:
             raw_data.append({"Project": project_title_lookup[proj_hash], "Start": start, "End": end})
 
+    # Skip chart generation if there is no available data
+    if len(raw_data) == 0:
+        return None
+
     data = pd.DataFrame(raw_data)
     min_start = data["Start"].min(skipna=True)
     max_end = data["End"].max(skipna=True)
@@ -106,29 +110,35 @@ def get_label_occurrence_per_frame_chart(
         alt.Chart(data, title=alt.Title(chart_title, fontSize=24, anchor=alt.TitleAnchor("middle")))
         .mark_bar(invalid=None)
         .encode(
-            alt.X("Start").title("Timeline Frames").scale(domain=[max(min_start - 1, 0), max_end + 1]).axis(format="d"),
+            alt.X("Start")
+            .title("Timeline Frames")
+            .type("quantitative")
+            .scale(domain=[max(min_start - 1, 0), max_end + 1])
+            .axis(format="d"),
             alt.X2("End"),
-            alt.Y("Project").scale(padding=0.2).axis(labelLimit=200),
-            color="Project",
-            tooltip=[alt.Tooltip(field_name) for field_name in data.columns],
+            alt.Y("Project").type("nominal").scale(padding=0.2).axis(labelLimit=200),
+            color="Project:N",
+            tooltip=["Project:N", "Start:Q", "End:Q"],
         )
     )
 
-    #  Create a scatter plot (points) to represent intervals with Start = End
+    #  Create a scatter plot (points) to represent intervals with Start = End and merge it with the bar chart (lines)
     points_data = data[data["Start"] == data["End"]]
-    points = (
-        alt.Chart(points_data)
-        .mark_point(size=50, filled=True)
-        .encode(
-            alt.X("Start"),
-            alt.Y("Project"),
-            color="Project",
-            tooltip=[alt.Tooltip(field_name) for field_name in points_data.columns],
+    if not points_data.empty:
+        points = (
+            alt.Chart(points_data)
+            .mark_point(size=50, filled=True)
+            .encode(
+                alt.X("Start").type("quantitative").axis(format="d"),
+                alt.Y("Project").type("nominal"),
+                color="Project:N",
+                tooltip=["Project:N", "Start:Q", "End:Q"],
+            )
         )
-    )
+        chart = lines + points
+    else:
+        chart = lines
 
-    # Combine the lines and points charts and configure axis labels and titles
-    chart = lines + points
     return chart.configure_axis(
         labelFontSize=16,
         titleFontSize=20,
