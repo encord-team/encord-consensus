@@ -12,7 +12,7 @@ from encord_consensus.lib.project_access import (
     count_label_rows,
     get_all_datasets,
     get_classifications_ontology,
-    get_user_client,
+    get_encord_client,
     list_all_data_rows,
     list_projects,
 )
@@ -22,7 +22,7 @@ st.write(f"# {CHOOSE_PROJECT_PAGE_TITLE}")
 
 # Get app configurations
 load_dotenv(encoding="utf-8")
-app_user_client = get_user_client(os.getenv("ENCORD_KEYFILE"))
+app_user_client = get_encord_client(os.getenv("ENCORD_KEYFILE"))
 st.session_state.app_user_client = app_user_client
 
 
