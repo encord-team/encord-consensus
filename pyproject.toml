@@ -21,6 +21,7 @@ pydantic = "2.0.3"
 python-dotenv = "^1.0.0"
 matplotlib = "^3.7.2"
 streamlit-extras = "^0.3.2" # Use this package until Streamlit supports session-preserving page navigation
+platformdirs = "^3.10.0" # Enable app configuration at the user level in any OS
 
 
 [tool.poetry.group.dev.dependencies]
