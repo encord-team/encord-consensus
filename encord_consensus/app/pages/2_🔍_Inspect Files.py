@@ -68,7 +68,7 @@ def reset_export():
     st.session_state.data_export = {}
 
 
-st.write("## Select Data Row to run consensus on")
+st.write("## Select the file to run consensus on")
 
 if "selected_data_hash" not in st.session_state:
     st.session_state.selected_data_hash = ()
@@ -83,22 +83,25 @@ if "data_export" not in st.session_state:
 if "pickers_to_show" not in st.session_state:
     st.session_state.pickers_to_show = set()
 
+for dr in list_all_data_rows(
+    st.session_state.app_user_client, st.session_state.attached_datasets, data_types=SUPPORTED_DATA_FORMATS
+):
+    emp = st.empty()
+    col1, col2 = emp.columns([9, 3])
+    col1.markdown(dr.title, unsafe_allow_html=True)
+    col2.button(
+        "Select",
+        key=f"select_{dr.uid}",
+        on_click=st_select_data_hash,
+        args=(dr.uid, dr.title),
+        disabled=st.session_state.selected_data_hash.count(dr.uid) == 1,
+    )
+
 if not st.session_state.selected_data_hash:
-    for dr in list_all_data_rows(
-        st.session_state.app_user_client, st.session_state.attached_datasets, data_types=SUPPORTED_DATA_FORMATS
-    ):
-        emp = st.empty()
-        col1, col2 = emp.columns([9, 3])
-        col1.markdown(dr.title, unsafe_allow_html=True)
-        col2.button(
-            "Select",
-            key=f"select_{dr.uid}",
-            on_click=st_select_data_hash,
-            args=(dr.uid, dr.title),
-        )
-elif st.session_state.selected_data_hash:
-    st.write("Downloaded data for:")
-    st.write(st.session_state.selected_data_hash)
+    exit(0)
+
+st.write("Downloaded data for:")
+st.write(st.session_state.selected_data_hash)
 
 # TODO: extract emails and project names for consensus
 

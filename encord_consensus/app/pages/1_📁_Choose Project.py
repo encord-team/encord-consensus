@@ -45,6 +45,7 @@ def st_add_project(project_hash, project_title):
 
     st.session_state.selected_projects.append(project_hash)
     st.session_state.project_title_lookup[project_hash] = project_title
+    st.session_state.selected_data_hash = ()
 
 
 def st_remove_project(project_hash):
@@ -52,12 +53,9 @@ def st_remove_project(project_hash):
     if not st.session_state.selected_projects:
         st.session_state.attached_datasets = []
         st.session_state.ontology = {}
-
-
-st.write("# Consensus Tool")
-
-if "selected_data_hash" not in st.session_state:
     st.session_state.selected_data_hash = ()
+
+
 if "selected_projects" not in st.session_state:
     st.session_state.selected_projects = []
 if "ontology" not in st.session_state:
@@ -65,26 +63,24 @@ if "ontology" not in st.session_state:
 if "project_title_lookup" not in st.session_state:
     st.session_state.project_title_lookup = {}
 
-if not st.session_state.selected_data_hash:
-    st.write("## Project Selection")
-    text_search = st.text_input("Search projects by title", value="")
+text_search = st.text_input("Search projects by title", value="")
+if text_search:
+    matched_projects = list_projects(app_user_client, text_search)
+    for p in matched_projects:
+        p_hash = p["project"]["project_hash"]
+        p_title = p["project"]["title"]
+        emp = st.empty()
+        col1, col2 = emp.columns([9, 3])
+        col1.markdown(p_title, unsafe_allow_html=True)
+        if p_hash not in st.session_state.selected_projects:
+            col2.button(
+                "Add",
+                key=f"add_{p_hash}",
+                on_click=st_add_project,
+                args=(p_hash, p_title),
+            )
 
-    if text_search:
-        matched_projects = list_projects(app_user_client, text_search)
-        for p in matched_projects:
-            p_hash = p["project"]["project_hash"]
-            p_title = p["project"]["title"]
-            emp = st.empty()
-            col1, col2 = emp.columns([9, 3])
-            col1.markdown(p_title, unsafe_allow_html=True)
-            if p_hash not in st.session_state.selected_projects:
-                col2.button(
-                    "Add",
-                    key=f"add_{p_hash}",
-                    on_click=st_add_project,
-                    args=(p_hash, p_title),
-                )
-
+if len(st.session_state.selected_projects) > 0:
     st.write("## Selected Projects")
     for p_hash in st.session_state.selected_projects:
         emp = st.empty()
