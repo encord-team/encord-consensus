@@ -78,7 +78,7 @@ class AppConfig:
         for name, value in toml.load(self.config_file).items():
             setattr(self, name, value)
 
-        # Fill the missing attributes from AppConfigProperties as `None`
+        # Fill missing attributes from AppConfigProperties with `None`
         for p in AppConfigProperties:
             if not hasattr(self, p.value):
                 setattr(self, p.value, None)
