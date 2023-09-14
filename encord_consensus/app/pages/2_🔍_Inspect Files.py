@@ -1,92 +1,42 @@
 import datetime
 import json
-import os
-import warnings
 
 import streamlit as st
-from dotenv import load_dotenv
-from encord.constants.enums import DataType
-from lib.data_export import export_regions_of_interest
-from lib.data_model import RegionOfInterest
-from lib.data_transformation import prepare_data_for_consensus
-from lib.frame_label_consensus import (
+
+from encord_consensus.app.common.constants import (
+    CONSENSUS_BROWSER_TAB_TITLE,
+    ENCORD_ICON_URL,
+    INSPECT_FILES_PAGE_TITLE,
+)
+from encord_consensus.lib.constants import SUPPORTED_DATA_FORMATS
+from encord_consensus.lib.data_export import export_regions_of_interest
+from encord_consensus.lib.data_model import RegionOfInterest
+from encord_consensus.lib.data_transformation import prepare_data_for_consensus
+from encord_consensus.lib.frame_label_consensus import (
     aggregate_by_answer,
     calculate_frame_level_min_n_agreement,
     find_regions_of_interest,
 )
-from lib.generate_charts import (
-    generate_stacked_chart,
+from encord_consensus.lib.generate_charts import (
     get_bar_chart,
     get_consensus_label_agreement_project_view_chart,
     get_line_chart,
 )
-from lib.project_access import (
-    count_label_rows,
+from encord_consensus.lib.project_access import (
     download_data_hash_data_from_projects,
-    get_all_datasets,
-    get_classifications_ontology,
-    get_user_client,
     list_all_data_rows,
-    list_projects,
 )
 
-warnings.filterwarnings("error", category=UserWarning)
-
-SUPPORTED_DATA_FORMATS = [DataType.VIDEO]
-
-load_dotenv(encoding="utf-8")
-app_user_client = get_user_client(os.getenv("ENCORD_KEYFILE"))
-
-if "attached_datasets" not in st.session_state:
-    st.session_state.attached_datasets = []
-if "selected_projects" not in st.session_state:
-    st.session_state.selected_projects = []
-if "ontology" not in st.session_state:
-    st.session_state.ontology = {}
-if "label_rows" not in st.session_state:
-    st.session_state.label_rows = {}
-if "selected_data_hash" not in st.session_state:
-    st.session_state.selected_data_hash = ()
-if "lr_data" not in st.session_state:
-    st.session_state.lr_data = {}
-if "project_title_lookup" not in st.session_state:
-    st.session_state.project_title_lookup = {}
-if "consensus_has_been_calculated" not in st.session_state:
-    st.session_state.consensus_has_been_calculated = False
-if "regions_to_export" not in st.session_state:
-    st.session_state.regions_to_export = set()
-if "data_export" not in st.session_state:
-    st.session_state.data_export = {}
-if "pickers_to_show" not in st.session_state:
-    st.session_state.pickers_to_show = set()
+st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
+st.write(f"# {INSPECT_FILES_PAGE_TITLE}")
 
 
-def st_add_project(project_hash, project_title):
-    datasets = get_all_datasets(app_user_client, project_hash)
-    if count_label_rows(app_user_client, project_hash) != len(list_all_data_rows(app_user_client, datasets)):
-        st.warning("You must select projects where all label rows are annotated!", icon="⚠️")
-        return
-
-    if not st.session_state.selected_projects:
-        st.session_state.attached_datasets = datasets
-    elif datasets != st.session_state.attached_datasets:
-        st.warning("You must select projects with the same attached datasets!", icon="⚠️")
-        return
-    if not st.session_state.ontology:
-        st.session_state.ontology = get_classifications_ontology(app_user_client, project_hash)
-    elif get_classifications_ontology(app_user_client, project_hash) != st.session_state.ontology:
-        st.warning("You must select projects with the same ontology!", icon="⚠️")
-        return
-
-    st.session_state.selected_projects.append(project_hash)
-    st.session_state.project_title_lookup[project_hash] = project_title
-
-
-def st_remove_project(project_hash):
-    st.session_state.selected_projects.remove(project_hash)
-    if not st.session_state.selected_projects:
-        st.session_state.attached_datasets = []
-        st.session_state.ontology = {}
+def st_select_data_hash(data_hash, data_title):
+    with st.spinner("Downloading data..."):
+        st.session_state.selected_data_hash = (data_hash, data_title)
+        st.session_state.lr_data = download_data_hash_data_from_projects(
+            st.session_state.app_user_client, data_hash, st.session_state.selected_projects
+        )
 
 
 def st_set_picker(to_pick: int) -> None:
@@ -118,51 +68,24 @@ def reset_export():
     st.session_state.data_export = {}
 
 
-st.write("# Consensus Tool")
+st.write("## Select Data Row to run consensus on")
 
-if not st.session_state.selected_data_hash:
-    st.write("## Project Selection")
-    text_search = st.text_input("Search projects by title", value="")
-
-    if text_search:
-        matched_projects = list_projects(app_user_client, text_search)
-        for p in matched_projects:
-            p_hash = p["project"]["project_hash"]
-            p_title = p["project"]["title"]
-            emp = st.empty()
-            col1, col2 = emp.columns([9, 3])
-            col1.markdown(p_title, unsafe_allow_html=True)
-            if p_hash not in st.session_state.selected_projects:
-                col2.button(
-                    "Add",
-                    key=f"add_{p_hash}",
-                    on_click=st_add_project,
-                    args=(p_hash, p_title),
-                )
-
-    st.write("## Selected Projects")
-    for p_hash in st.session_state.selected_projects:
-        emp = st.empty()
-        col1, col2 = emp.columns([9, 3])
-        col1.markdown(st.session_state.project_title_lookup[p_hash], unsafe_allow_html=True)
-        col2.button("Remove", key=f"del_{p_hash}", on_click=st_remove_project, args=(p_hash,))
-
-    st.write("## Select Data Row to run consensus on")
-else:
-    st.write("## Selected Data Row to run consensus on")
-
-
-def st_select_data_hash(data_hash, data_title):
-    with st.spinner("Downloading data..."):
-        st.session_state.selected_data_hash = (data_hash, data_title)
-        st.session_state.lr_data = download_data_hash_data_from_projects(
-            app_user_client, data_hash, st.session_state.selected_projects
-        )
-
+if "selected_data_hash" not in st.session_state:
+    st.session_state.selected_data_hash = ()
+if "lr_data" not in st.session_state:
+    st.session_state.lr_data = {}
+if "consensus_has_been_calculated" not in st.session_state:
+    st.session_state.consensus_has_been_calculated = False
+if "regions_to_export" not in st.session_state:
+    st.session_state.regions_to_export = set()
+if "data_export" not in st.session_state:
+    st.session_state.data_export = {}
+if "pickers_to_show" not in st.session_state:
+    st.session_state.pickers_to_show = set()
 
 if not st.session_state.selected_data_hash:
     for dr in list_all_data_rows(
-        app_user_client, st.session_state.attached_datasets, data_types=SUPPORTED_DATA_FORMATS
+        st.session_state.app_user_client, st.session_state.attached_datasets, data_types=SUPPORTED_DATA_FORMATS
     ):
         emp = st.empty()
         col1, col2 = emp.columns([9, 3])
