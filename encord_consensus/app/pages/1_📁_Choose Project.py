@@ -87,3 +87,18 @@ if len(st.session_state.selected_projects) > 0:
         col1, col2 = emp.columns([9, 3])
         col1.markdown(st.session_state.project_title_lookup[p_hash], unsafe_allow_html=True)
         col2.button("Remove", key=f"del_{p_hash}", on_click=st_remove_project, args=(p_hash,))
+
+
+# ---------- CSS STYLES ----------
+st.markdown(
+    """
+<style>
+/* Set the minimum and maximum width for the sidebar */
+[data-testid="stSidebar"][aria-expanded="true"]{
+    min-width: 5%;
+    max-width: 15%;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
