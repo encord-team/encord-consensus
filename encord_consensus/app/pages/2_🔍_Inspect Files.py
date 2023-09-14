@@ -219,3 +219,18 @@ if st.session_state.lr_data:
             mime="application/json",
             on_click=reset_export,
         )
+
+
+# ---------- CSS STYLES ----------
+st.markdown(
+    """
+<style>
+/* Set the minimum and maximum width for the sidebar */
+[data-testid="stSidebar"][aria-expanded="true"]{
+    min-width: 5%;
+    max-width: 15%;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)

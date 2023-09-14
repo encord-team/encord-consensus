@@ -27,15 +27,21 @@ with container:
         switch_page(EXPORT_PAGE_NAME)
 
 
-# ---------- CSS STYLES APPLIED TO THE HOME PAGE ----------
-# Enlarge buttons that correspond to the main pages
+# ---------- CSS STYLES ----------
 st.markdown(
     """
 <style>
+/* Enlarge buttons corresponding to the main pages */
 div.css-ocqkz7.esravye3 button {
     height: auto;
     padding-top: 20px;
     padding-bottom: 20px;
+}
+
+/* Set the minimum and maximum width for the sidebar */
+[data-testid="stSidebar"][aria-expanded="true"]{
+    min-width: 5%;
+    max-width: 15%;
 }
 </style>
 """,
