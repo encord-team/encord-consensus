@@ -103,6 +103,19 @@ if not st.session_state.selected_data_hash:
 st.write("Downloaded data for:")
 st.write(st.session_state.selected_data_hash)
 
+# Display the file's thumbnail
+if not st.session_state.get("downloaded_file"):
+    encord_proj = st.session_state.app_user_client.get_project(st.session_state.selected_projects[0])
+
+    # Ensure that the label row corresponding to the data hash exists in the platform (label_hash must not be `None`)
+    temp_lr = encord_proj.list_label_rows_v2(data_hashes=[st.session_state.selected_data_hash[0]])[0]
+    temp_lr.initialise_labels()
+
+    # Get signed url and display the video
+    lr = encord_proj.get_label_row(temp_lr.label_hash)
+    signed_url = next(iter(lr.data_units.values()), dict()).get("data_link")
+    st.video(signed_url)
+
 # TODO: extract emails and project names for consensus
 
 if st.session_state.lr_data:
