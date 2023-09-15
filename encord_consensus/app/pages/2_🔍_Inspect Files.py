@@ -2,8 +2,11 @@ import datetime
 import json
 
 import streamlit as st
+from streamlit_extras.switch_page_button import switch_page
 
 from encord_consensus.app.common.constants import (
+    CHOOSE_PROJECT_PAGE_NAME,
+    CHOOSE_PROJECT_PAGE_TITLE,
     CONSENSUS_BROWSER_TAB_TITLE,
     ENCORD_ICON_URL,
     INSPECT_FILES_PAGE_TITLE,
@@ -68,6 +71,36 @@ def reset_export():
     st.session_state.data_export = {}
 
 
+if "attached_datasets" not in st.session_state:
+    st.warning(f"Seems like you haven't selected any projects, please proceed to {CHOOSE_PROJECT_PAGE_TITLE}.")
+    with st.container():
+        if st.button(f"Go to {CHOOSE_PROJECT_PAGE_TITLE}", use_container_width=True):
+            switch_page(CHOOSE_PROJECT_PAGE_NAME)
+        st.write("<div class='PageButtonMarker'/>", unsafe_allow_html=True)
+    # ---------- CSS STYLES ----------
+    st.markdown(
+        """
+    <style>
+    /* Enlarge buttons corresponding to the main pages */
+    /*div.css-1n76uvr.esravye0 button { */
+    div[data-testid="stVerticalBlock"] > div:has(div.PageButtonMarker) button {
+        height: auto;
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+    
+    /* Set the minimum and maximum width for the sidebar */
+    [data-testid="stSidebar"][aria-expanded="true"]{
+        min-width: 5%;
+        max-width: 15%;
+    }
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )
+    exit(0)
+
+
 st.write("## Select the file to run consensus on")
 
 if "selected_data_hash" not in st.session_state:
@@ -98,6 +131,26 @@ for dr in list_all_data_rows(
     )
 
 if not st.session_state.selected_data_hash:
+    # ---------- CSS STYLES ----------
+    st.markdown(
+        """
+    <style>
+    /* Enlarge buttons corresponding to the main pages */
+    div[data-testid="stVerticalBlock"] > div:has(div.PageButtonMarker) button {
+        height: auto;
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+
+    /* Set the minimum and maximum width for the sidebar */
+    [data-testid="stSidebar"][aria-expanded="true"]{
+        min-width: 5%;
+        max-width: 15%;
+    }
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )
     exit(0)
 
 st.write("Downloaded data for:")
@@ -225,6 +278,13 @@ if st.session_state.lr_data:
 st.markdown(
     """
 <style>
+/* Enlarge buttons corresponding to the main pages */
+div[data-testid="stVerticalBlock"] > div:has(div.PageButtonMarker) button {
+    height: auto;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
 /* Set the minimum and maximum width for the sidebar */
 [data-testid="stSidebar"][aria-expanded="true"]{
     min-width: 5%;
