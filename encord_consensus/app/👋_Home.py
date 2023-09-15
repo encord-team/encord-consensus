@@ -11,8 +11,10 @@ from encord_consensus.app.common.constants import (
     INSPECT_FILES_PAGE_NAME,
     INSPECT_FILES_PAGE_TITLE,
 )
+from encord_consensus.app.common.css import set_page_css
 
 st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
+set_page_css()
 st.write("# Welcome to Encord Consensus! 👋")
 
 container = st.container()
@@ -25,25 +27,4 @@ with container:
         switch_page(INSPECT_FILES_PAGE_NAME)
     if export_col.button(EXPORT_PAGE_TITLE, use_container_width=True):
         switch_page(EXPORT_PAGE_NAME)
-
-
-# ---------- CSS STYLES ----------
-st.markdown(
-    """
-<style>
-/* Enlarge buttons corresponding to the main pages */
-div.css-ocqkz7.esravye3 button {
-    height: auto;
-    padding-top: 20px;
-    padding-bottom: 20px;
-}
-
-/* Set the minimum and maximum width for the sidebar */
-[data-testid="stSidebar"][aria-expanded="true"]{
-    min-width: 5%;
-    max-width: 15%;
-}
-</style>
-""",
-    unsafe_allow_html=True,
-)
+    st.write("<div class='PageButtonMarker'/>", unsafe_allow_html=True)  # Enlarge page buttons using CSS

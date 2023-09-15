@@ -11,6 +11,7 @@ from encord_consensus.app.common.constants import (
     ENCORD_ICON_URL,
     INSPECT_FILES_PAGE_TITLE,
 )
+from encord_consensus.app.common.css import set_page_css
 from encord_consensus.lib.constants import SUPPORTED_DATA_FORMATS
 from encord_consensus.lib.data_export import export_regions_of_interest
 from encord_consensus.lib.data_model import RegionOfInterest
@@ -31,6 +32,7 @@ from encord_consensus.lib.project_access import (
 )
 
 st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
+set_page_css()
 st.write(f"# {INSPECT_FILES_PAGE_TITLE}")
 
 
@@ -76,28 +78,7 @@ if "attached_datasets" not in st.session_state:
     with st.container():
         if st.button(f"Go to {CHOOSE_PROJECT_PAGE_TITLE}", use_container_width=True):
             switch_page(CHOOSE_PROJECT_PAGE_NAME)
-        st.write("<div class='PageButtonMarker'/>", unsafe_allow_html=True)
-    # ---------- CSS STYLES ----------
-    st.markdown(
-        """
-    <style>
-    /* Enlarge buttons corresponding to the main pages */
-    /*div.css-1n76uvr.esravye0 button { */
-    div[data-testid="stVerticalBlock"] > div:has(div.PageButtonMarker) button {
-        height: auto;
-        padding-top: 20px;
-        padding-bottom: 20px;
-    }
-    
-    /* Set the minimum and maximum width for the sidebar */
-    [data-testid="stSidebar"][aria-expanded="true"]{
-        min-width: 5%;
-        max-width: 15%;
-    }
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
+        st.write("<div class='PageButtonMarker'/>", unsafe_allow_html=True)  # Enlarge page buttons using CSS
     exit(0)
 
 
@@ -131,26 +112,6 @@ for dr in list_all_data_rows(
     )
 
 if not st.session_state.selected_data_hash:
-    # ---------- CSS STYLES ----------
-    st.markdown(
-        """
-    <style>
-    /* Enlarge buttons corresponding to the main pages */
-    div[data-testid="stVerticalBlock"] > div:has(div.PageButtonMarker) button {
-        height: auto;
-        padding-top: 20px;
-        padding-bottom: 20px;
-    }
-
-    /* Set the minimum and maximum width for the sidebar */
-    [data-testid="stSidebar"][aria-expanded="true"]{
-        min-width: 5%;
-        max-width: 15%;
-    }
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
     exit(0)
 
 st.write("Downloaded data for:")
@@ -272,25 +233,3 @@ if st.session_state.lr_data:
             mime="application/json",
             on_click=reset_export,
         )
-
-
-# ---------- CSS STYLES ----------
-st.markdown(
-    """
-<style>
-/* Enlarge buttons corresponding to the main pages */
-div[data-testid="stVerticalBlock"] > div:has(div.PageButtonMarker) button {
-    height: auto;
-    padding-top: 20px;
-    padding-bottom: 20px;
-}
-
-/* Set the minimum and maximum width for the sidebar */
-[data-testid="stSidebar"][aria-expanded="true"]{
-    min-width: 5%;
-    max-width: 15%;
-}
-</style>
-""",
-    unsafe_allow_html=True,
-)
