@@ -11,6 +11,25 @@ def set_page_css():
         padding-top: 20px;
         padding-bottom: 20px;
     }
+    
+    /* Set button's color and default animations */
+    div.stButton > button:first-child {
+        background-color: #5658dd; /* Encord's color */
+        color: #ffffff;
+    }
+    div.stButton p {
+        font-size: 20px;
+    }
+    div.stButton > button:hover {
+        opacity: 0.65;
+        transition: opacity .2s;
+        border-color: #5658dd;
+    }
+    div.stButton > button:focus:not(:active) {
+        border-color: #8186eb;
+        background-color: #5658dd; /* Encord's color */
+        color: #ffffff;
+    }
 
     /* Set the minimum and maximum width for the sidebar */
     [data-testid="stSidebar"][aria-expanded="true"]{
