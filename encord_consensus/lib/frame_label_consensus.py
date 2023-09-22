@@ -72,7 +72,7 @@ def calculate_integrated_agreement_score(region: RegionOfInterest, total_num_ann
 
 
 def process_vote_counts(number_of_annotators_agreeing) -> Dict[int, int]:
-    max_number_of_annotators_agreeing = max(number_of_annotators_agreeing)
+    max_number_of_annotators_agreeing = max(number_of_annotators_agreeing, default=0)
     exact_num_agreed = {
         num_agreed: number_of_annotators_agreeing.count(num_agreed) for num_agreed in set(number_of_annotators_agreeing)
     }
