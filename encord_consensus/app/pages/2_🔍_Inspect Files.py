@@ -2,12 +2,16 @@ import datetime
 import json
 
 import streamlit as st
+from streamlit_extras.switch_page_button import switch_page
 
 from encord_consensus.app.common.constants import (
+    CHOOSE_PROJECT_PAGE_NAME,
+    CHOOSE_PROJECT_PAGE_TITLE,
     CONSENSUS_BROWSER_TAB_TITLE,
     ENCORD_ICON_URL,
     INSPECT_FILES_PAGE_TITLE,
 )
+from encord_consensus.app.common.css import set_page_css
 from encord_consensus.lib.constants import SUPPORTED_DATA_FORMATS
 from encord_consensus.lib.data_export import export_regions_of_interest
 from encord_consensus.lib.data_model import RegionOfInterest
@@ -28,6 +32,7 @@ from encord_consensus.lib.project_access import (
 )
 
 st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
+set_page_css()
 st.write(f"# {INSPECT_FILES_PAGE_TITLE}")
 
 
@@ -66,6 +71,15 @@ def prepare_export():
 
 def reset_export():
     st.session_state.data_export = {}
+
+
+if "attached_datasets" not in st.session_state:
+    st.warning(f"Seems like you haven't selected any projects, please proceed to {CHOOSE_PROJECT_PAGE_TITLE}.")
+    with st.container():
+        if st.button(f"Go to {CHOOSE_PROJECT_PAGE_TITLE}", use_container_width=True):
+            switch_page(CHOOSE_PROJECT_PAGE_NAME)
+        st.write("<div class='PageButtonMarker'/>", unsafe_allow_html=True)  # Enlarge page buttons using CSS
+    exit(0)
 
 
 st.write("## Select the file to run consensus on")
@@ -219,18 +233,3 @@ if st.session_state.lr_data:
             mime="application/json",
             on_click=reset_export,
         )
-
-
-# ---------- CSS STYLES ----------
-st.markdown(
-    """
-<style>
-/* Set the minimum and maximum width for the sidebar */
-[data-testid="stSidebar"][aria-expanded="true"]{
-    min-width: 5%;
-    max-width: 15%;
-}
-</style>
-""",
-    unsafe_allow_html=True,
-)

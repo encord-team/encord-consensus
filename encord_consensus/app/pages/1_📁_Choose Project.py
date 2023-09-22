@@ -8,6 +8,7 @@ from encord_consensus.app.common.constants import (
     CONSENSUS_BROWSER_TAB_TITLE,
     ENCORD_ICON_URL,
 )
+from encord_consensus.app.common.css import set_page_css
 from encord_consensus.lib.project_access import (
     count_label_rows,
     get_all_datasets,
@@ -18,6 +19,7 @@ from encord_consensus.lib.project_access import (
 )
 
 st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
+set_page_css()
 st.write(f"# {CHOOSE_PROJECT_PAGE_TITLE}")
 
 # Get app configurations
@@ -87,18 +89,3 @@ if len(st.session_state.selected_projects) > 0:
         col1, col2 = emp.columns([9, 3])
         col1.markdown(st.session_state.project_title_lookup[p_hash], unsafe_allow_html=True)
         col2.button("Remove", key=f"del_{p_hash}", on_click=st_remove_project, args=(p_hash,))
-
-
-# ---------- CSS STYLES ----------
-st.markdown(
-    """
-<style>
-/* Set the minimum and maximum width for the sidebar */
-[data-testid="stSidebar"][aria-expanded="true"]{
-    min-width: 5%;
-    max-width: 15%;
-}
-</style>
-""",
-    unsafe_allow_html=True,
-)

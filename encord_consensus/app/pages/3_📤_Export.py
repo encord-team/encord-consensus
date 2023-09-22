@@ -5,21 +5,14 @@ from encord_consensus.app.common.constants import (
     ENCORD_ICON_URL,
     EXPORT_PAGE_TITLE,
 )
+from encord_consensus.app.common.css import set_page_css
 
 st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
+set_page_css()
 st.write(f"# {EXPORT_PAGE_TITLE}")
 
-
-# ---------- CSS STYLES ----------
-st.markdown(
-    """
-<style>
-/* Set the minimum and maximum width for the sidebar */
-[data-testid="stSidebar"][aria-expanded="true"]{
-    min-width: 5%;
-    max-width: 15%;
-}
-</style>
-""",
-    unsafe_allow_html=True,
+st.markdown("### Bulk export consensus results for selected files.")
+st.info(
+    "This feature is currently in progress.\n\r "
+    "If you have any questions or need assistance, please feel free to contact us at support@encord.com!"
 )
