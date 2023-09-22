@@ -2,6 +2,9 @@ import logging
 from collections import defaultdict
 from typing import DefaultDict, Dict, List
 
+from encord.constants.enums import DataType
+from encord.project import LabelRow
+
 from .data_model import Answer, ClassificationView, FQPart
 
 
@@ -26,13 +29,29 @@ def get_precedence(ontology, feature_hash, answer_hash):
     return int("".join(explored_r.pop().split(".")))
 
 
+def from_label_row_to_labels_per_frame(lr: LabelRow) -> dict:
+    frames = dict()
+    if lr.data_type == DataType.IMAGE.value:
+        for du in lr.data_units.values():
+            if "data_sequence" not in du:
+                # add logs to trace bad json formats
+                continue
+            frames[du["data_sequence"]] = du.get("labels", dict())
+    elif lr.data_type == DataType.VIDEO.value:
+        frames = next(iter(lr.data_units.values()), dict()).get("labels", dict())
+    else:
+        raise ValueError(f"Unexpected file type encountered: {lr.data_type}.")
+    return frames
+
+
 def prepare_data_for_consensus(ontology, lr_data) -> List[ClassificationView]:
     out = []
     for project_hash, lr in lr_data.items():
         lookup: Dict[str, Answer] = {}
         res: DefaultDict[Answer, list[int]] = defaultdict(list[int])
 
-        for frame, labels in lr["data_units"][lr["data_hash"]]["labels"].items():
+        labels_per_frame = from_label_row_to_labels_per_frame(lr)
+        for frame, labels in labels_per_frame.items():
             for cl in labels["classifications"]:
                 if not lookup.get(cl["classificationHash"]):
                     fq_parts = []
