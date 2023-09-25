@@ -1,4 +1,5 @@
-from collections import defaultdict
+import itertools
+from collections import Counter, defaultdict
 from typing import DefaultDict, Dict, List
 
 from .data_model import (
@@ -73,12 +74,14 @@ def calculate_integrated_agreement_score(region: RegionOfInterest, total_num_ann
 
 def process_vote_counts(number_of_annotators_agreeing) -> Dict[int, int]:
     max_number_of_annotators_agreeing = max(number_of_annotators_agreeing, default=0)
-    exact_num_agreed = {
-        num_agreed: number_of_annotators_agreeing.count(num_agreed) for num_agreed in set(number_of_annotators_agreeing)
-    }
+    agreements_count_exact = [0] * (max_number_of_annotators_agreeing + 1)
+    for annotators_amount, agreement_count in Counter(number_of_annotators_agreeing).items():
+        agreements_count_exact[annotators_amount] = agreement_count
+    agreement_count_ge = list(reversed(list(itertools.accumulate(reversed(agreements_count_exact)))))
+
     return {
-        n: sum([exact_num_agreed[num_agreed] for num_agreed in range(n, max_number_of_annotators_agreeing + 1)])
-        for n in exact_num_agreed.keys()
+        annotators_amount: agreement_count_ge
+        for annotators_amount, agreement_count_ge in enumerate(agreement_count_ge, start=1)
     }
 
 
