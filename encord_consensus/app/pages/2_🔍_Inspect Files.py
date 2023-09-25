@@ -244,14 +244,18 @@ if st.session_state.lr_data:
                     st.altair_chart(chart.interactive(bind_y=False), use_container_width=True)
 
     st.write("### Export")
-    st.write(f"There are a total of {len(st.session_state.regions_to_export)} regions to export.")
+    if len(st.session_state.regions_to_export) == 0:
+        st.write("No regions available for export.")
+    else:
+        one_region = len(st.session_state.regions_to_export) == 1
+        st.write(f"{len(st.session_state.regions_to_export)} region{'' if one_region else 's'} available for export.")
 
-    if st.button("Prepare Export", on_click=prepare_export) and st.session_state.data_export:
-        st.write("Your export is ready to download!")
-        st.download_button(
-            label="Download Export",
-            data=st.session_state.data_export,
-            file_name=f'consensus_label_export_{datetime.datetime.now().isoformat(timespec="seconds")}.json',
-            mime="application/json",
-            on_click=reset_export,
-        )
+        if st.button("Prepare Export", on_click=prepare_export) and st.session_state.data_export:
+            st.write("Your export is ready to download!")
+            st.download_button(
+                label="Download Export",
+                data=st.session_state.data_export,
+                file_name=f'consensus_label_export_{datetime.datetime.now().isoformat(timespec="seconds")}.json',
+                mime="application/json",
+                on_click=reset_export,
+            )
