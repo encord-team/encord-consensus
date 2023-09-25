@@ -199,12 +199,6 @@ if st.session_state.lr_data:
                 args=(region,),
                 key=f"select_{hash(region)}",
             )
-            st.button(
-                "Toggle Chart",
-                on_click=st_set_picker,
-                args=(hash(region),),
-                key=f"show_{hash(region)}",
-            )
 
             mini_report = (
                 f"Mini Report\nIntegrated Agreement Score: {region.consensus_data.integrated_agreement_score}\n\n"
@@ -221,6 +215,17 @@ if st.session_state.lr_data:
             for idx, part in enumerate(region.answer.fq_parts):
                 identifier_text += (idx * "\t") + f"{part.question}: {part.answer}\n"
             st.code(f"{identifier_text}\n{mini_report}")
+
+            lr = next(iter(st.session_state.lr_data.values()))
+            if lr.data_type == DataType.IMAGE.value:
+                continue
+
+            st.button(
+                "Toggle Chart",
+                on_click=st_set_picker,
+                args=(hash(region),),
+                key=f"show_{hash(region)}",
+            )
 
             if hash(region) not in st.session_state.pickers_to_show:
                 st.altair_chart(
