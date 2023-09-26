@@ -2,6 +2,8 @@ import datetime
 import json
 
 import streamlit as st
+from encord.constants.enums import DataType
+from encord.project import Project
 from streamlit_extras.switch_page_button import switch_page
 
 from encord_consensus.app.common.constants import (
@@ -12,7 +14,7 @@ from encord_consensus.app.common.constants import (
     INSPECT_FILES_PAGE_TITLE,
 )
 from encord_consensus.app.common.css import set_page_css
-from encord_consensus.lib.constants import SUPPORTED_DATA_FORMATS
+from encord_consensus.lib.constants import SUPPORTED_DATA_TYPES
 from encord_consensus.lib.data_export import export_regions_of_interest
 from encord_consensus.lib.data_model import RegionOfInterest
 from encord_consensus.lib.data_transformation import prepare_data_for_consensus
@@ -34,6 +36,27 @@ from encord_consensus.lib.project_access import (
 st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
 set_page_css()
 st.write(f"# {INSPECT_FILES_PAGE_TITLE}")
+
+
+def show_file_thumbnail(encord_project: Project, file_data_hash: str):
+    # NOTE: Using obsolete LabelRow class instead of LabelRowV2 because LabelRowV2 can't retrieve signed urls
+    # Ensure that the label row corresponding to the data hash exists in the platform (label_hash must not be `None`)
+    lr_metadata = encord_project.list_label_rows(data_hashes=[file_data_hash], include_uninitialised_labels=True)[0]
+    if lr_metadata.label_hash is None:
+        lr = encord_project.create_label_row(lr_metadata.data_hash)
+    else:
+        lr = encord_project.get_label_row(lr_metadata.label_hash)
+
+    if DataType(lr.data_type) not in SUPPORTED_DATA_TYPES:
+        # add logs to trace inadequate uses
+        return
+
+    if lr.data_type == DataType.IMAGE.value:
+        signed_url = next(iter(lr.data_units.values()), dict()).get("data_link")
+        st.image(signed_url)
+    elif lr.data_type == DataType.VIDEO.value:
+        signed_url = next(iter(lr.data_units.values()), dict()).get("data_link")
+        st.video(signed_url)
 
 
 def st_select_data_hash(data_hash, data_title):
@@ -98,7 +121,7 @@ if "pickers_to_show" not in st.session_state:
     st.session_state.pickers_to_show = set()
 
 for dr in list_all_data_rows(
-    st.session_state.app_user_client, st.session_state.attached_datasets, data_types=SUPPORTED_DATA_FORMATS
+    st.session_state.app_user_client, st.session_state.attached_datasets, data_types=SUPPORTED_DATA_TYPES
 ):
     emp = st.empty()
     col1, col2 = emp.columns([9, 3])
@@ -119,16 +142,10 @@ st.write(st.session_state.selected_data_hash)
 
 # Display the file's thumbnail
 if not st.session_state.get("downloaded_file"):
-    encord_proj = st.session_state.app_user_client.get_project(st.session_state.selected_projects[0])
-
-    # Ensure that the label row corresponding to the data hash exists in the platform (label_hash must not be `None`)
-    temp_lr = encord_proj.list_label_rows_v2(data_hashes=[st.session_state.selected_data_hash[0]])[0]
-    temp_lr.initialise_labels()
-
-    # Get signed url and display the video
-    lr = encord_proj.get_label_row(temp_lr.label_hash)
-    signed_url = next(iter(lr.data_units.values()), dict()).get("data_link")
-    st.video(signed_url)
+    show_file_thumbnail(
+        st.session_state.app_user_client.get_project(st.session_state.selected_projects[0]),
+        st.session_state.selected_data_hash[0],
+    )
 
 # TODO: extract emails and project names for consensus
 
@@ -182,12 +199,6 @@ if st.session_state.lr_data:
                 args=(region,),
                 key=f"select_{hash(region)}",
             )
-            st.button(
-                "Toggle Chart",
-                on_click=st_set_picker,
-                args=(hash(region),),
-                key=f"show_{hash(region)}",
-            )
 
             mini_report = (
                 f"Mini Report\nIntegrated Agreement Score: {region.consensus_data.integrated_agreement_score}\n\n"
@@ -204,6 +215,17 @@ if st.session_state.lr_data:
             for idx, part in enumerate(region.answer.fq_parts):
                 identifier_text += (idx * "\t") + f"{part.question}: {part.answer}\n"
             st.code(f"{identifier_text}\n{mini_report}")
+
+            lr = next(iter(st.session_state.lr_data.values()))
+            if lr.data_type == DataType.IMAGE.value:
+                continue
+
+            st.button(
+                "Toggle Chart",
+                on_click=st_set_picker,
+                args=(hash(region),),
+                key=f"show_{hash(region)}",
+            )
 
             if hash(region) not in st.session_state.pickers_to_show:
                 st.altair_chart(
@@ -222,14 +244,18 @@ if st.session_state.lr_data:
                     st.altair_chart(chart.interactive(bind_y=False), use_container_width=True)
 
     st.write("### Export")
-    st.write(f"There are a total of {len(st.session_state.regions_to_export)} regions to export.")
+    if len(st.session_state.regions_to_export) == 0:
+        st.write("No regions available for export.")
+    else:
+        one_region = len(st.session_state.regions_to_export) == 1
+        st.write(f"{len(st.session_state.regions_to_export)} region{'' if one_region else 's'} available for export.")
 
-    if st.button("Prepare Export", on_click=prepare_export) and st.session_state.data_export:
-        st.write("Your export is ready to download!")
-        st.download_button(
-            label="Download Export",
-            data=st.session_state.data_export,
-            file_name=f'consensus_label_export_{datetime.datetime.now().isoformat(timespec="seconds")}.json',
-            mime="application/json",
-            on_click=reset_export,
-        )
+        if st.button("Prepare Export", on_click=prepare_export) and st.session_state.data_export:
+            st.write("Your export is ready to download!")
+            st.download_button(
+                label="Download Export",
+                data=st.session_state.data_export,
+                file_name=f'consensus_label_export_{datetime.datetime.now().isoformat(timespec="seconds")}.json',
+                mime="application/json",
+                on_click=reset_export,
+            )
