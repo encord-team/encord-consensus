@@ -149,7 +149,9 @@ if st.session_state.lr_data:
     total_num_annnotators = len(get_state().projects)
     if not st.session_state.consensus_has_been_calculated:
         with st.spinner("Processing data..."):
-            prepared_data = prepare_data_for_consensus(st.session_state.ontology, st.session_state.lr_data)
+            prepared_data = prepare_data_for_consensus(
+                get_state().projects[0].ontology["classifications"], st.session_state.lr_data
+            )
             aggregated_data = aggregate_by_answer(prepared_data)
             st.session_state.fl_integrated_agreement = calculate_frame_level_min_n_agreement(aggregated_data)
             st.session_state.regions_of_interest = find_regions_of_interest(aggregated_data, total_num_annnotators)

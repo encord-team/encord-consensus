@@ -10,7 +10,6 @@ from encord_consensus.app.common.state import State, get_state
 from encord_consensus.lib.project_access import (
     count_label_rows,
     get_all_datasets,
-    get_classifications_ontology,
     list_all_data_rows,
     list_projects,
 )
@@ -24,6 +23,7 @@ def render_choose_projects_page():
 
     def add_project(project_hash: str, project_title):
         encord_client = get_state().encord_client
+        project = encord_client.get_project(project_hash)
         datasets = get_all_datasets(encord_client, project_hash)
         if count_label_rows(encord_client, project_hash) != len(list_all_data_rows(encord_client, datasets)):
             st.warning("You must select projects where all label rows are annotated!", icon="⚠️")
@@ -34,13 +34,13 @@ def render_choose_projects_page():
         elif datasets != st.session_state.attached_datasets:
             st.warning("You must select projects with the same attached datasets!", icon="⚠️")
             return
-        if not st.session_state.ontology:
-            st.session_state.ontology = get_classifications_ontology(encord_client, project_hash)
-        elif get_classifications_ontology(encord_client, project_hash) != st.session_state.ontology:
+
+        # Verify that all selected projects share the same ontology
+        if len(get_state().projects) > 0 and project.ontology_hash != get_state().projects[0].ontology_hash:
             st.warning("You must select projects with the same ontology!", icon="⚠️")
             return
 
-        get_state().projects.append(encord_client.get_project(project_hash))
+        get_state().projects.append(project)
         st.session_state.project_title_lookup[project_hash] = project_title
         st.session_state.selected_data_hash = ()
 
@@ -51,11 +51,8 @@ def render_choose_projects_page():
 
         if len(get_state().projects) == 0:
             st.session_state.attached_datasets = []
-            st.session_state.ontology = {}
         st.session_state.selected_data_hash = ()
 
-    if "ontology" not in st.session_state:
-        st.session_state.ontology = {}
     if "project_title_lookup" not in st.session_state:
         st.session_state.project_title_lookup = {}
 
