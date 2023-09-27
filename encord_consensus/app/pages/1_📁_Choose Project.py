@@ -9,7 +9,7 @@ from encord_consensus.app.common.css import set_page_css
 from encord_consensus.app.common.state import State, get_state
 from encord_consensus.lib.project_access import (
     count_label_rows,
-    get_all_datasets,
+    get_all_dataset_hashes,
     list_all_data_rows,
     list_projects,
 )
@@ -21,24 +21,26 @@ def render_choose_projects_page():
     st.write(f"# {CHOOSE_PROJECT_PAGE_TITLE}")
     State.init()
 
-    def add_project(project_hash: str, project_title):
+    def add_project(project_hash: str):
         encord_client = get_state().encord_client
         project = encord_client.get_project(project_hash)
-        datasets = get_all_datasets(encord_client, project_hash)
+        datasets = get_all_dataset_hashes(project)
         if count_label_rows(encord_client, project_hash) != len(list_all_data_rows(encord_client, datasets)):
             st.warning("You must select projects where all label rows are annotated!", icon="⚠️")
             return
 
-        if len(get_state().projects) == 0:
-            st.session_state.attached_datasets = datasets
-        elif datasets != st.session_state.attached_datasets:
-            st.warning("You must select projects with the same attached datasets!", icon="⚠️")
-            return
-
-        # Verify that all selected projects share the same ontology
-        if len(get_state().projects) > 0 and project.ontology_hash != get_state().projects[0].ontology_hash:
-            st.warning("You must select projects with the same ontology!", icon="⚠️")
-            return
+        if len(get_state().projects) > 0:
+            has_errors = False
+            # Verify that all selected projects share the same datasets
+            if datasets != get_all_dataset_hashes(get_state().projects[0]):
+                st.warning("Please select projects with the same attached datasets!", icon="⚠️")
+                has_errors = True
+            # Verify that all selected projects share the same ontology
+            if project.ontology_hash != get_state().projects[0].ontology_hash:
+                st.warning("Please select projects with the same ontology!", icon="⚠️")
+                has_errors = True
+            if has_errors:
+                return
 
         get_state().projects.append(project)
         st.session_state.selected_data_hash = ()
@@ -48,8 +50,6 @@ def render_choose_projects_page():
         if project_index is not None:
             get_state().projects.pop(project_index)
 
-        if len(get_state().projects) == 0:
-            st.session_state.attached_datasets = []
         st.session_state.selected_data_hash = ()
 
     text_search = st.text_input("Search projects by title", value="")
@@ -57,12 +57,11 @@ def render_choose_projects_page():
         matched_projects = list_projects(get_state().encord_client, text_search)
         for proj in matched_projects:
             proj_hash = proj["project"].project_hash
-            p_title = proj["project"].title
             emp = st.empty()
             col1, col2 = emp.columns([9, 3])
-            col1.markdown(p_title, unsafe_allow_html=True)
+            col1.markdown(proj["project"].title, unsafe_allow_html=True)
             if not any(proj_hash == p.project_hash for p in get_state().projects):
-                col2.button("Add", key=f"add_{proj_hash}", on_click=add_project, args=(proj_hash, p_title))
+                col2.button("Add", key=f"add_{proj_hash}", on_click=add_project, args=(proj_hash,))
 
     if len(get_state().projects) > 0:
         st.write("## Selected Projects")

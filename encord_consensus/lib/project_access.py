@@ -19,8 +19,8 @@ def get_all_projects(user_client: EncordUserClient, project_hashes: List) -> Lis
     return [user_client.get_project(p_hash) for p_hash in project_hashes]
 
 
-def get_all_datasets(user_client: EncordUserClient, project_hash: str) -> Set[str]:
-    return {d["dataset_hash"] for d in user_client.get_project(project_hash).datasets}
+def get_all_dataset_hashes(project: Project) -> set[str]:
+    return {d["dataset_hash"] for d in project.datasets}
 
 
 def get_classifications_ontology(user_client: EncordUserClient, project_hash: str) -> List:

@@ -14,7 +14,7 @@ from encord_consensus.app.common.constants import (
     INSPECT_FILES_PAGE_TITLE,
 )
 from encord_consensus.app.common.css import set_page_css
-from encord_consensus.app.common.state import get_state
+from encord_consensus.app.common.state import State, get_state
 from encord_consensus.lib.constants import SUPPORTED_DATA_TYPES
 from encord_consensus.lib.data_export import export_regions_of_interest
 from encord_consensus.lib.data_model import RegionOfInterest
@@ -31,12 +31,14 @@ from encord_consensus.lib.generate_charts import (
 )
 from encord_consensus.lib.project_access import (
     download_label_row_from_projects,
+    get_all_dataset_hashes,
     list_all_data_rows,
 )
 
 st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
 set_page_css()
 st.write(f"# {INSPECT_FILES_PAGE_TITLE}")
+State.init()
 
 
 def show_file_thumbnail(encord_project: Project, file_data_hash: str):
@@ -95,7 +97,7 @@ def reset_export():
     st.session_state.data_export = {}
 
 
-if "attached_datasets" not in st.session_state:
+if len(get_state().projects) == 0:
     st.warning(f"Seems like you haven't selected any projects, please proceed to {CHOOSE_PROJECT_PAGE_TITLE}.")
     with st.container():
         if st.button(f"Go to {CHOOSE_PROJECT_PAGE_TITLE}", use_container_width=True):
@@ -120,7 +122,7 @@ if "pickers_to_show" not in st.session_state:
     st.session_state.pickers_to_show = set()
 
 for dr in list_all_data_rows(
-    get_state().encord_client, st.session_state.attached_datasets, data_types=SUPPORTED_DATA_TYPES
+    get_state().encord_client, get_all_dataset_hashes(get_state().projects[0]), data_types=SUPPORTED_DATA_TYPES
 ):
     emp = st.empty()
     col1, col2 = emp.columns([9, 3])
