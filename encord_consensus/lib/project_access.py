@@ -45,12 +45,10 @@ def list_all_data_rows(
     return res
 
 
-def download_data_hash_data_from_projects(user_client: EncordUserClient, data_hash: str, projects: List[str]) -> Dict:
+def download_label_row_from_projects(projects: list[Project], data_hash: str) -> dict:
     lr_data = {}
-    for p_hash in projects:
-        project = user_client.get_project(p_hash)
-        lrms = project.list_label_rows(data_hashes=[data_hash])
-        lr_hash = lrms[0].label_hash
-        lr = project.get_label_row(lr_hash)
-        lr_data[p_hash] = lr
+    for proj in projects:
+        lr_hash = proj.list_label_rows(data_hashes=[data_hash])[0].label_hash
+        lr = proj.get_label_row(lr_hash)
+        lr_data[proj.project_hash] = lr
     return lr_data

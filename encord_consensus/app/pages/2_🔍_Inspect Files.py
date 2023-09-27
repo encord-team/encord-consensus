@@ -14,6 +14,7 @@ from encord_consensus.app.common.constants import (
     INSPECT_FILES_PAGE_TITLE,
 )
 from encord_consensus.app.common.css import set_page_css
+from encord_consensus.app.common.state import get_state
 from encord_consensus.lib.constants import SUPPORTED_DATA_TYPES
 from encord_consensus.lib.data_export import export_regions_of_interest
 from encord_consensus.lib.data_model import RegionOfInterest
@@ -29,7 +30,7 @@ from encord_consensus.lib.generate_charts import (
     get_line_chart,
 )
 from encord_consensus.lib.project_access import (
-    download_data_hash_data_from_projects,
+    download_label_row_from_projects,
     list_all_data_rows,
 )
 
@@ -62,9 +63,7 @@ def show_file_thumbnail(encord_project: Project, file_data_hash: str):
 def st_select_data_hash(data_hash, data_title):
     with st.spinner("Downloading data..."):
         st.session_state.selected_data_hash = (data_hash, data_title)
-        st.session_state.lr_data = download_data_hash_data_from_projects(
-            st.session_state.app_user_client, data_hash, st.session_state.selected_projects
-        )
+        st.session_state.lr_data = download_label_row_from_projects(get_state().projects, data_hash)
 
 
 def st_set_picker(to_pick: int) -> None:
@@ -121,7 +120,7 @@ if "pickers_to_show" not in st.session_state:
     st.session_state.pickers_to_show = set()
 
 for dr in list_all_data_rows(
-    st.session_state.app_user_client, st.session_state.attached_datasets, data_types=SUPPORTED_DATA_TYPES
+    get_state().encord_client, st.session_state.attached_datasets, data_types=SUPPORTED_DATA_TYPES
 ):
     emp = st.empty()
     col1, col2 = emp.columns([9, 3])
@@ -142,15 +141,12 @@ st.write(st.session_state.selected_data_hash)
 
 # Display the file's thumbnail
 if not st.session_state.get("downloaded_file"):
-    show_file_thumbnail(
-        st.session_state.app_user_client.get_project(st.session_state.selected_projects[0]),
-        st.session_state.selected_data_hash[0],
-    )
+    show_file_thumbnail(get_state().projects[0], st.session_state.selected_data_hash[0])
 
 # TODO: extract emails and project names for consensus
 
 if st.session_state.lr_data:
-    total_num_annnotators = len(st.session_state.selected_projects)
+    total_num_annnotators = len(get_state().projects)
     if not st.session_state.consensus_has_been_calculated:
         with st.spinner("Processing data..."):
             prepared_data = prepare_data_for_consensus(st.session_state.ontology, st.session_state.lr_data)
