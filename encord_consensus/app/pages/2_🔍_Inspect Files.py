@@ -237,7 +237,8 @@ if st.session_state.lr_data:
                 )
 
             if hash(region) in st.session_state.pickers_to_show:
-                chart = get_consensus_label_agreement_project_view_chart(region, st.session_state.project_title_lookup)
+                project_title_lookup = {p.project_hash: p.title for p in get_state().projects}
+                chart = get_consensus_label_agreement_project_view_chart(region, project_title_lookup)
                 if chart is not None:
                     st.altair_chart(chart.interactive(bind_y=False), use_container_width=True)
 

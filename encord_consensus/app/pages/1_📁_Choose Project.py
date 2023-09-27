@@ -41,7 +41,6 @@ def render_choose_projects_page():
             return
 
         get_state().projects.append(project)
-        st.session_state.project_title_lookup[project_hash] = project_title
         st.session_state.selected_data_hash = ()
 
     def remove_project(project_hash):
@@ -53,25 +52,17 @@ def render_choose_projects_page():
             st.session_state.attached_datasets = []
         st.session_state.selected_data_hash = ()
 
-    if "project_title_lookup" not in st.session_state:
-        st.session_state.project_title_lookup = {}
-
     text_search = st.text_input("Search projects by title", value="")
     if text_search:
         matched_projects = list_projects(get_state().encord_client, text_search)
         for proj in matched_projects:
-            p_hash = proj["project"].project_hash
+            proj_hash = proj["project"].project_hash
             p_title = proj["project"].title
             emp = st.empty()
             col1, col2 = emp.columns([9, 3])
             col1.markdown(p_title, unsafe_allow_html=True)
-            if not any(p_hash == p.project_hash for p in get_state().projects):
-                col2.button(
-                    "Add",
-                    key=f"add_{p_hash}",
-                    on_click=add_project,
-                    args=(p_hash, p_title),
-                )
+            if not any(proj_hash == p.project_hash for p in get_state().projects):
+                col2.button("Add", key=f"add_{proj_hash}", on_click=add_project, args=(proj_hash, p_title))
 
     if len(get_state().projects) > 0:
         st.write("## Selected Projects")
@@ -79,7 +70,7 @@ def render_choose_projects_page():
             proj_hash = proj.project_hash
             emp = st.empty()
             col1, col2 = emp.columns([9, 3])
-            col1.markdown(st.session_state.project_title_lookup[proj_hash], unsafe_allow_html=True)
+            col1.markdown(proj.title, unsafe_allow_html=True)
             col2.button("Remove", key=f"del_{proj_hash}", on_click=remove_project, args=(proj_hash,))
 
 
