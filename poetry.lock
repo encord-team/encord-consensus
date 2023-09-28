@@ -451,17 +451,18 @@ files = [
 
 [[package]]
 name = "encord"
-version = "0.1.83"
+version = "0.1.96"
 description = "Encord Python SDK Client"
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = ">=3.8,<4.0"
 files = [
-    {file = "encord-0.1.83-py3-none-any.whl", hash = "sha256:c3116c75f60f413ec552024a18755524cc4c7d5b6b774fce883c680c0d747316"},
-    {file = "encord-0.1.83.tar.gz", hash = "sha256:7a923c47ca21cf3980ef618ff049383d61ecc82641671fabececc9ba0a32e46c"},
+    {file = "encord-0.1.96-py3-none-any.whl", hash = "sha256:ebeeb79a5ecf564e86be9b5dbb6cb24f5f76489625ee3147fade005cd1cbfb92"},
+    {file = "encord-0.1.96.tar.gz", hash = "sha256:d0785adf88f0144bedc97282159933e21b207f405f2019da091351db31404268"},
 ]
 
 [package.dependencies]
 cryptography = ">=3.4.8"
+pydantic = ">=1.7.0"
 python-dateutil = ">=2.8.2,<3.0.0"
 requests = ">=2.25.0,<3.0.0"
 tqdm = ">=4.32.1,<5.0.0"
@@ -2334,4 +2335,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "e0b83aa1826003f2aa32fd71c7f95528b4c04e2be288385b3c503e784413758c"
+content-hash = "8b022a6cbf3399fc1e2b163d8a8490a85423af86623fe023f9038d5dfeda73ce"

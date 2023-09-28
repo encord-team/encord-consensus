@@ -13,18 +13,24 @@ from encord_consensus.app.common.constants import (
 )
 from encord_consensus.app.common.css import set_page_css
 
-st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
-set_page_css()
-st.write("# Welcome to Encord Consensus! 👋")
 
-container = st.container()
-with container:
-    choose_project_col, inspect_files_col, export_col = st.columns(3)
+def render_home_page():
+    st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
+    set_page_css()
+    st.write("# Welcome to Encord Consensus! 👋")
 
-    if choose_project_col.button(CHOOSE_PROJECT_PAGE_TITLE, use_container_width=True):
-        switch_page(CHOOSE_PROJECT_PAGE_NAME)
-    if inspect_files_col.button(INSPECT_FILES_PAGE_TITLE, use_container_width=True):
-        switch_page(INSPECT_FILES_PAGE_NAME)
-    if export_col.button(EXPORT_PAGE_TITLE, use_container_width=True):
-        switch_page(EXPORT_PAGE_NAME)
-    st.write("<div class='PageButtonMarker'/>", unsafe_allow_html=True)  # Enlarge page buttons using CSS
+    page_buttons_container = st.container()
+    with page_buttons_container:
+        choose_project_col, inspect_files_col, export_col = st.columns(3)
+
+        if choose_project_col.button(CHOOSE_PROJECT_PAGE_TITLE, use_container_width=True):
+            switch_page(CHOOSE_PROJECT_PAGE_NAME)
+        if inspect_files_col.button(INSPECT_FILES_PAGE_TITLE, use_container_width=True):
+            switch_page(INSPECT_FILES_PAGE_NAME)
+        if export_col.button(EXPORT_PAGE_TITLE, use_container_width=True):
+            switch_page(EXPORT_PAGE_NAME)
+        st.write("<div class='PageButtonMarker'/>", unsafe_allow_html=True)  # Enlarge page buttons using CSS
+
+
+if __name__ == "__main__":
+    render_home_page()

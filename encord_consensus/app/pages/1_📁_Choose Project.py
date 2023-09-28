@@ -1,7 +1,4 @@
-import os
-
 import streamlit as st
-from dotenv import load_dotenv
 
 from encord_consensus.app.common.constants import (
     CHOOSE_PROJECT_PAGE_TITLE,
@@ -9,83 +6,71 @@ from encord_consensus.app.common.constants import (
     ENCORD_ICON_URL,
 )
 from encord_consensus.app.common.css import set_page_css
+from encord_consensus.app.common.state import InspectFilesState, State, get_state
 from encord_consensus.lib.project_access import (
     count_label_rows,
-    get_all_datasets,
-    get_classifications_ontology,
-    get_encord_client,
+    get_all_dataset_hashes,
     list_all_data_rows,
     list_projects,
 )
 
-st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
-set_page_css()
-st.write(f"# {CHOOSE_PROJECT_PAGE_TITLE}")
 
-# Get app configurations
-load_dotenv(encoding="utf-8")
-app_user_client = get_encord_client(os.getenv("ENCORD_KEYFILE"))
-st.session_state.app_user_client = app_user_client
+def render_choose_projects_page():
+    st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
+    set_page_css()
+    st.write(f"# {CHOOSE_PROJECT_PAGE_TITLE}")
+    State.init()
+
+    def add_project(project_hash: str):
+        encord_client = get_state().encord_client
+        project = encord_client.get_project(project_hash)
+        datasets = get_all_dataset_hashes(project)
+        if count_label_rows(encord_client, project_hash) != len(list_all_data_rows(encord_client, datasets)):
+            st.warning("You must select projects where all label rows are annotated!", icon="⚠️")
+            return
+
+        if len(get_state().projects) > 0:
+            has_errors = False
+            # Verify that all selected projects share the same datasets
+            if datasets != get_all_dataset_hashes(get_state().projects[0]):
+                st.warning("Please select projects with the same attached datasets!", icon="⚠️")
+                has_errors = True
+            # Verify that all selected projects share the same ontology
+            if project.ontology_hash != get_state().projects[0].ontology_hash:
+                st.warning("Please select projects with the same ontology!", icon="⚠️")
+                has_errors = True
+            if has_errors:
+                return
+
+        get_state().projects.append(project)
+        get_state().inspect_files_state = InspectFilesState(data_hash=None)
+
+    def remove_project(project_hash):
+        project_index = next((i for i, p in enumerate(get_state().projects) if p.project_hash == project_hash), None)
+        if project_index is not None:
+            get_state().projects.pop(project_index)
+        get_state().inspect_files_state = InspectFilesState(data_hash=None)
+
+    text_search = st.text_input("Search projects by title", value="")
+    if text_search:
+        matched_projects = list_projects(get_state().encord_client, text_search)
+        for proj in matched_projects:
+            proj_hash = proj["project"].project_hash
+            emp = st.empty()
+            col1, col2 = emp.columns([9, 3])
+            col1.markdown(proj["project"].title, unsafe_allow_html=True)
+            if not any(proj_hash == p.project_hash for p in get_state().projects):
+                col2.button("Add", key=f"add_{proj_hash}", on_click=add_project, args=(proj_hash,))
+
+    if len(get_state().projects) > 0:
+        st.write("## Selected Projects")
+        for proj in get_state().projects:
+            proj_hash = proj.project_hash
+            emp = st.empty()
+            col1, col2 = emp.columns([9, 3])
+            col1.markdown(proj.title, unsafe_allow_html=True)
+            col2.button("Remove", key=f"del_{proj_hash}", on_click=remove_project, args=(proj_hash,))
 
 
-def st_add_project(project_hash, project_title):
-    datasets = get_all_datasets(app_user_client, project_hash)
-    if count_label_rows(app_user_client, project_hash) != len(list_all_data_rows(app_user_client, datasets)):
-        st.warning("You must select projects where all label rows are annotated!", icon="⚠️")
-        return
-
-    if not st.session_state.selected_projects:
-        st.session_state.attached_datasets = datasets
-    elif datasets != st.session_state.attached_datasets:
-        st.warning("You must select projects with the same attached datasets!", icon="⚠️")
-        return
-    if not st.session_state.ontology:
-        st.session_state.ontology = get_classifications_ontology(app_user_client, project_hash)
-    elif get_classifications_ontology(app_user_client, project_hash) != st.session_state.ontology:
-        st.warning("You must select projects with the same ontology!", icon="⚠️")
-        return
-
-    st.session_state.selected_projects.append(project_hash)
-    st.session_state.project_title_lookup[project_hash] = project_title
-    st.session_state.selected_data_hash = ()
-
-
-def st_remove_project(project_hash):
-    st.session_state.selected_projects.remove(project_hash)
-    if not st.session_state.selected_projects:
-        st.session_state.attached_datasets = []
-        st.session_state.ontology = {}
-    st.session_state.selected_data_hash = ()
-
-
-if "selected_projects" not in st.session_state:
-    st.session_state.selected_projects = []
-if "ontology" not in st.session_state:
-    st.session_state.ontology = {}
-if "project_title_lookup" not in st.session_state:
-    st.session_state.project_title_lookup = {}
-
-text_search = st.text_input("Search projects by title", value="")
-if text_search:
-    matched_projects = list_projects(app_user_client, text_search)
-    for p in matched_projects:
-        p_hash = p["project"]["project_hash"]
-        p_title = p["project"]["title"]
-        emp = st.empty()
-        col1, col2 = emp.columns([9, 3])
-        col1.markdown(p_title, unsafe_allow_html=True)
-        if p_hash not in st.session_state.selected_projects:
-            col2.button(
-                "Add",
-                key=f"add_{p_hash}",
-                on_click=st_add_project,
-                args=(p_hash, p_title),
-            )
-
-if len(st.session_state.selected_projects) > 0:
-    st.write("## Selected Projects")
-    for p_hash in st.session_state.selected_projects:
-        emp = st.empty()
-        col1, col2 = emp.columns([9, 3])
-        col1.markdown(st.session_state.project_title_lookup[p_hash], unsafe_allow_html=True)
-        col2.button("Remove", key=f"del_{p_hash}", on_click=st_remove_project, args=(p_hash,))
+if __name__ == "__main__":
+    render_choose_projects_page()
