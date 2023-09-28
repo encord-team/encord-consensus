@@ -6,6 +6,7 @@ import streamlit as st
 from dotenv import load_dotenv
 from encord import EncordUserClient, Project
 
+from encord_consensus.lib.data_model import RegionOfInterest
 from encord_consensus.lib.project_access import get_encord_client
 
 
@@ -18,12 +19,16 @@ class StateKey(str, Enum):
 
 @dataclass
 class InspectFilesState:
-    selected_data_hash: tuple
-    lr_data: dict
-    consensus_has_been_calculated: bool
-    regions_to_export: set
-    data_export: dict
-    pickers_to_show: set
+    data_hash: str | None = None
+    lr_data: dict = field(default_factory=dict)
+    consensus_has_been_calculated: bool = False
+    fl_integrated_agreement: dict[int, int] = field(default_factory=dict)
+    regions_of_interest: list[RegionOfInterest] = field(default_factory=list)
+    regions_to_export: set = field(default_factory=set)
+    data_export: dict = field(default_factory=dict)
+    pickers_to_show: set = field(default_factory=set)
+    min_agreement_slider: int = 1
+    min_integrated_score_slider: float = 0
 
 
 @dataclass
@@ -35,7 +40,7 @@ class State:
     """
 
     encord_client: EncordUserClient
-    # inspect_files_state: InspectFilesState
+    inspect_files_state: InspectFilesState = field(default_factory=InspectFilesState)
     projects: list[Project] = field(default_factory=list)
 
     @classmethod

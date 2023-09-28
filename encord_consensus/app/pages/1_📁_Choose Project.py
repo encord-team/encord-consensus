@@ -6,7 +6,7 @@ from encord_consensus.app.common.constants import (
     ENCORD_ICON_URL,
 )
 from encord_consensus.app.common.css import set_page_css
-from encord_consensus.app.common.state import State, get_state
+from encord_consensus.app.common.state import InspectFilesState, State, get_state
 from encord_consensus.lib.project_access import (
     count_label_rows,
     get_all_dataset_hashes,
@@ -43,14 +43,13 @@ def render_choose_projects_page():
                 return
 
         get_state().projects.append(project)
-        st.session_state.selected_data_hash = ()
+        get_state().inspect_files_state = InspectFilesState(data_hash=None)
 
     def remove_project(project_hash):
         project_index = next((i for i, p in enumerate(get_state().projects) if p.project_hash == project_hash), None)
         if project_index is not None:
             get_state().projects.pop(project_index)
-
-        st.session_state.selected_data_hash = ()
+        get_state().inspect_files_state = InspectFilesState(data_hash=None)
 
     text_search = st.text_input("Search projects by title", value="")
     if text_search:
