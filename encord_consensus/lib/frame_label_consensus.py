@@ -77,8 +77,7 @@ def process_vote_counts(number_of_annotators_agreeing) -> Dict[int, int]:
     agreements_count_exact = [0] * (max_number_of_annotators_agreeing + 1)
     for annotators_amount, agreement_count in Counter(number_of_annotators_agreeing).items():
         agreements_count_exact[annotators_amount] = agreement_count
-    agreement_count_ge = list(reversed(list(itertools.accumulate(reversed(agreements_count_exact)))))
-
+    agreement_count_ge = list(reversed(list(itertools.accumulate(reversed(agreements_count_exact)))))[1:]
     return {
         annotators_amount: agreement_count_ge
         for annotators_amount, agreement_count_ge in enumerate(agreement_count_ge, start=1)
