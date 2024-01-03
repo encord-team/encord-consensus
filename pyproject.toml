@@ -15,7 +15,7 @@ encord-consensus = "encord_consensus.launcher:launch"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
-encord = "0.1.96"
+encord = "0.1.103"
 streamlit = "1.23.1"
 pydantic = "2.0.3"
 python-dotenv = "^1.0.0"
