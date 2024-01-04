@@ -33,9 +33,14 @@ def render_workflows_page():
             synced_counter = send_to_annotate(**{'user_client': user_client, **workflow['spec']})
         st.text(f'Executed {workflow_name}, synced: {synced_counter} items')
 
+    def delete_workflow(workflow_name: str):
+        del wf_config[workflow_name]
+        with open(config_path, 'w') as f:
+            json.dump(wf_config, f)
+
     for wf_name, wf in wf_config.items():
         emp = st.empty()
-        col1, col2 = emp.columns([3, 3])
+        col1, col2, col3 = emp.columns([5, 2, 2])
         with col1:
             with st.expander(wf_name):
                 st.text('Source Project:')
@@ -43,7 +48,8 @@ def render_workflows_page():
                 st.text('Target Projects:')
                 for target_project_name in wf["meta"]["target_project_names"]:
                     st.text(target_project_name)
-        col2.button("Sync", key=f"sync_{wf_name}", on_click=sync, args=(wf_name, wf,))
+        col2.button("Sync 🔄", key=f"sync_{wf_name}", on_click=sync, args=(wf_name, wf,), type="primary")
+        col3.button("Delete ❌", key=f"delete_{wf_name}", on_click=delete_workflow, args=(wf_name,))
 
 
 if __name__ == "__main__":
