@@ -6,11 +6,9 @@ from encord_consensus.app.common.constants import (
     ENCORD_ICON_URL,
 )
 from encord_consensus.app.common.css import set_page_css
-from encord_consensus.app.common.state import InspectFilesState, State, get_state
+from encord_consensus.app.common.project_selection import add_project, remove_project
+from encord_consensus.app.common.state import State, get_state
 from encord_consensus.lib.project_access import (
-    count_label_rows,
-    get_all_dataset_hashes,
-    list_all_data_rows,
     list_projects,
 )
 
@@ -20,36 +18,6 @@ def render_choose_projects_page():
     set_page_css()
     st.write(f"# {CHOOSE_PROJECT_PAGE_TITLE}")
     State.init()
-
-    def add_project(project_hash: str):
-        encord_client = get_state().encord_client
-        project = encord_client.get_project(project_hash)
-        datasets = get_all_dataset_hashes(project)
-        if count_label_rows(encord_client, project_hash) != len(list_all_data_rows(encord_client, datasets)):
-            st.warning("You must select projects where all label rows are annotated!", icon="⚠️")
-            return
-
-        if len(get_state().projects) > 0:
-            has_errors = False
-            # Verify that all selected projects share the same datasets
-            if datasets != get_all_dataset_hashes(get_state().projects[0]):
-                st.warning("Please select projects with the same attached datasets!", icon="⚠️")
-                has_errors = True
-            # Verify that all selected projects share the same ontology
-            if project.ontology_hash != get_state().projects[0].ontology_hash:
-                st.warning("Please select projects with the same ontology!", icon="⚠️")
-                has_errors = True
-            if has_errors:
-                return
-
-        get_state().projects.append(project)
-        get_state().inspect_files_state = InspectFilesState(data_hash=None)
-
-    def remove_project(project_hash):
-        project_index = next((i for i, p in enumerate(get_state().projects) if p.project_hash == project_hash), None)
-        if project_index is not None:
-            get_state().projects.pop(project_index)
-        get_state().inspect_files_state = InspectFilesState(data_hash=None)
 
     text_search = st.text_input("Search projects by title", value="")
     if text_search:
