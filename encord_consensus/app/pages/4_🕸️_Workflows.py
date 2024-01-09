@@ -53,7 +53,7 @@ def render_workflows_page():
     def toggle_visibility():
         get_state().show_element = not get_state().show_element
 
-    def add_workflow(new_workflow_name: str):
+    def add_workflow(new_workflow_name: str, stage_filter: str):
         meta = {}
         source_project = get_state().parent_project
         meta['source_project_name'] = source_project.title
@@ -64,7 +64,7 @@ def render_workflows_page():
             "spec": {
                 "source_project_hash": source_project.project_hash,
                 "target_project_hashes": [p.project_hash for p in get_target_projects()],
-                "stage_filter": "Review 1",
+                "stage_filter": stage_filter,
                 "target_priority": 1
             },
             "meta": {
@@ -81,6 +81,7 @@ def render_workflows_page():
 
     def render_workflow_add():
         new_workflow_name = st.text_input('New Workflow Name')
+        stage_filter = st.text_input('Stage Filter (must match exactly with stage in app)')
         st.text('Selected Projects')
         for proj in get_state().projects:
             emp = st.empty()
@@ -101,7 +102,7 @@ def render_workflows_page():
                 st.text(f'--{target_project.title}')
 
             if st.button("Create"):
-                add_workflow(new_workflow_name)
+                add_workflow(new_workflow_name, stage_filter)
                 reset_creation_flow()
                 toggle_visibility()
                 st.experimental_rerun()
@@ -122,6 +123,7 @@ def render_workflows_page():
         col1, col2, col3 = emp.columns([5, 2, 2])
         with col1:
             with st.expander(wf_name):
+                st.text(f'Stage Filter: {wf["spec"]["stage_filter"]}')
                 st.text('Source Project:')
                 st.text(f'--{wf["meta"]["source_project_name"]}')
                 st.text('Target Projects:')
