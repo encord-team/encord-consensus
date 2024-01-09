@@ -65,7 +65,10 @@ def show_file_thumbnail(encord_project: Project, file_data_hash: str):
 def select_data_hash(data_hash: str) -> None:
     with st.spinner("Downloading data..."):
         get_state().inspect_files_state = InspectFilesState(data_hash=data_hash)
-        get_state().inspect_files_state.lr_data = download_label_row_from_projects(get_state().projects, data_hash)
+        try:
+            get_state().inspect_files_state.lr_data = download_label_row_from_projects(get_state().projects, data_hash)
+        except Exception as e:
+            st.warning(e)
 
 
 def set_picker(to_pick: int) -> None:

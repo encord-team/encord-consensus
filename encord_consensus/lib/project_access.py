@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Set, Union
 
 from encord import EncordUserClient, Project
 from encord.constants.enums import DataType
+from encord.exceptions import GenericServerError
 
 
 def get_encord_client(path_to_keyfile: str) -> EncordUserClient:
@@ -10,6 +11,13 @@ def get_encord_client(path_to_keyfile: str) -> EncordUserClient:
         private_key = f.read()
     return EncordUserClient.create_with_ssh_private_key(private_key)
 
+
+def get_project_title_if_exists(user_client: EncordUserClient, project_hash: str) -> str | None:
+    try:
+        project = user_client.get_project(project_hash)
+    except GenericServerError:
+        return None
+    return project.title
 
 def list_projects(user_client: EncordUserClient, search_query: str) -> List[Dict]:
     return user_client.get_projects(title_like=f"%{search_query}%")
@@ -48,7 +56,10 @@ def list_all_data_rows(
 def download_label_row_from_projects(projects: list[Project], data_hash: str) -> dict:
     lr_data = {}
     for proj in projects:
-        lr_hash = proj.list_label_rows(data_hashes=[data_hash])[0].label_hash
+        matches = proj.list_label_rows(data_hashes=[data_hash])
+        if len(matches) == 0:
+            raise Exception(f'Task in project <{proj.title}> is not annotated!')
+        lr_hash = matches[0].label_hash
         lr = proj.get_label_row(lr_hash)
         lr_data[proj.project_hash] = lr
     return lr_data
