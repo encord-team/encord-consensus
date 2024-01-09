@@ -42,6 +42,8 @@ class State:
     encord_client: EncordUserClient
     inspect_files_state: InspectFilesState = field(default_factory=InspectFilesState)
     projects: list[Project] = field(default_factory=list)
+    parent_project: Project | None = None
+    show_element: bool = False
 
     @classmethod
     def init(cls):

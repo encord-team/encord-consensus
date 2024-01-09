@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict
 
 import streamlit as st
+from encord import Project
 
 from encord_consensus.app.common.constants import (
     WORKFLOWS_PAGE_TITLE,
@@ -10,10 +11,11 @@ from encord_consensus.app.common.constants import (
     ENCORD_ICON_URL,
 )
 from encord_consensus.app.common.css import set_page_css
+from encord_consensus.app.common.project_selection import add_project
 from encord_consensus.app.common.state import State, get_state
-from encord_consensus.lib.project_access import get_project_title_if_exists
-from encord_consensus.lib.workflow_utils import send_to_annotate
+from encord_consensus.lib.project_access import list_projects
 from encord_consensus.lib.utils import get_project_root
+from encord_consensus.lib.workflow_utils import send_to_annotate
 
 
 def render_workflows_page():
@@ -39,6 +41,82 @@ def render_workflows_page():
         with open(config_path, 'w') as f:
             json.dump(wf_config, f)
 
+    def select_parent_project(project: Project):
+        get_state().parent_project = project
+
+    def deselect_parent_project():
+        get_state().parent_project = None
+
+    def get_target_projects():
+        return [p for p in get_state().projects if p != get_state().parent_project]
+
+    def toggle_visibility():
+        get_state().show_element = not get_state().show_element
+
+    def add_workflow(new_workflow_name: str):
+        meta = {}
+        source_project = get_state().parent_project
+        meta['source_project_name'] = source_project.title
+
+        new_target_project_names = []
+        meta['target_project_names'] = [p.title for p in get_target_projects()]
+        wf_config[new_workflow_name] = {
+            "spec": {
+                "source_project_hash": source_project.project_hash,
+                "target_project_hashes": [p.project_hash for p in get_target_projects()],
+                "stage_filter": "Review 1",
+                "target_priority": 1
+            },
+            "meta": {
+                "source_project_name": "source project",
+                "target_project_names": new_target_project_names
+            }
+        }
+        with open(config_path, 'w') as f:
+            json.dump(wf_config, f)
+
+    def reset_creation_flow():
+        get_state().parent_project = None
+        get_state().projects = []
+
+    def render_workflow_add():
+        new_workflow_name = st.text_input('New Workflow Name')
+        st.text('Selected Projects')
+        for proj in get_state().projects:
+            emp = st.empty()
+            col1, col2 = emp.columns([9, 3])
+            col1.markdown(proj.title, unsafe_allow_html=True)
+            if not get_state().parent_project:
+                col2.button("Select Source", key=f"select_{proj.project_hash}", on_click=select_parent_project,
+                            args=(proj,))
+            elif proj == get_state().parent_project:
+                col2.button("Deselect Source", key=f"select_{proj.project_hash}", on_click=deselect_parent_project)
+
+        if get_state().parent_project:
+            st.subheader('Workflow Preview')
+            st.text('Source Project:')
+            st.text(f'--{get_state().parent_project.title}')
+            st.text('Target Projects:')
+            for target_project in get_target_projects():
+                st.text(f'--{target_project.title}')
+
+            if st.button("Create"):
+                add_workflow(new_workflow_name)
+                reset_creation_flow()
+                toggle_visibility()
+                st.experimental_rerun()
+
+        text_search = st.text_input("Search projects by title", value="")
+        if text_search:
+            matched_projects = list_projects(get_state().encord_client, text_search)
+            for proj in matched_projects:
+                proj_hash = proj["project"].project_hash
+                emp = st.empty()
+                col1, col2 = emp.columns([9, 3])
+                col1.markdown(proj["project"].title, unsafe_allow_html=True)
+                if not any(proj_hash == p.project_hash for p in get_state().projects):
+                    col2.button("Add", key=f"add_{proj_hash}", on_click=add_project, args=(proj_hash,))
+
     for wf_name, wf in wf_config.items():
         emp = st.empty()
         col1, col2, col3 = emp.columns([5, 2, 2])
@@ -53,47 +131,11 @@ def render_workflows_page():
         col3.button("Delete ❌", key=f"delete_{wf_name}", on_click=delete_workflow, args=(wf_name,))
 
     st.title('New Workflow')
-    with st.form("New Workflow Form", clear_on_submit=True):
-        new_workflow_name = st.text_input('Workflow Name')
-        new_source_project_hash = st.text_input('Source Project Hash')
-        st.text('Specify multiple hashes as a comma separated list, e.g. hash1, hash2,...')
-        target_project_hashes_str = st.text_input('Target Project Hashes')
-        submitted = st.form_submit_button("Submit")
-        if submitted:
-            valid = True
-            meta = {}
-            source_project_name = get_project_title_if_exists(user_client, new_source_project_hash)
-            if source_project_name:
-                meta['source_project_name'] = source_project_name
-            else:
-                st.error(f'{new_source_project_hash} does not exist or you do not have access!')
-                valid = False
 
-            new_target_project_names = []
-            new_target_project_hashes = [p_hash.strip() for p_hash in target_project_hashes_str.split(',')]
-            for target_project_hash in new_target_project_hashes:
-                target_project_name = get_project_title_if_exists(user_client, target_project_hash)
-                if target_project_name:
-                    new_target_project_names.append(target_project_name)
-                else:
-                    st.error(f'{target_project_hash} does not exist or you do not have access!')
-                    valid = False
-            meta['target_project_names'] = new_target_project_names
-            if valid:
-                wf_config[new_workflow_name] = {
-                    "spec": {
-                        "source_project_hash": new_source_project_hash,
-                        "target_project_hashes": new_target_project_hashes,
-                        "stage_filter": "Review 1",
-                        "target_priority": 1
-                    },
-                    "meta": {
-                        "source_project_name": "source project",
-                        "target_project_names": new_target_project_names
-                    }
-                }
-                with open(config_path, 'w') as f:
-                    json.dump(wf_config, f)
+    if not get_state().show_element:
+        st.button('➕', on_click=toggle_visibility)
+    if get_state().show_element:
+        render_workflow_add()
 
 
 if __name__ == "__main__":
