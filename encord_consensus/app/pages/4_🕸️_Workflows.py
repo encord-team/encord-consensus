@@ -27,7 +27,9 @@ def render_workflows_page():
 
     root_dir = get_project_root()
     config_path = root_dir.joinpath(Path('.workflow_configs.json'))
-
+    if not config_path.exists():
+        with open(config_path, 'w') as f:
+            json.dump({}, f)
     with open(config_path, 'r') as f:
         wf_config = json.load(f)
 
