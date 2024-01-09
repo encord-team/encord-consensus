@@ -1,16 +1,13 @@
 import streamlit as st
 
 from encord_consensus.app.common.state import get_state, InspectFilesState
-from encord_consensus.lib.project_access import get_all_dataset_hashes, count_label_rows, list_all_data_rows
+from encord_consensus.lib.project_access import get_all_dataset_hashes
 
 
 def add_project(project_hash: str):
     encord_client = get_state().encord_client
     project = encord_client.get_project(project_hash)
     datasets = get_all_dataset_hashes(project)
-    if count_label_rows(encord_client, project_hash) != len(list_all_data_rows(encord_client, datasets)):
-        st.warning("You must select projects where all label rows are annotated!", icon="⚠️")
-        return
 
     if len(get_state().projects) > 0:
         has_errors = False

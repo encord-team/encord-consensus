@@ -56,7 +56,10 @@ def list_all_data_rows(
 def download_label_row_from_projects(projects: list[Project], data_hash: str) -> dict:
     lr_data = {}
     for proj in projects:
-        lr_hash = proj.list_label_rows(data_hashes=[data_hash])[0].label_hash
+        matches = proj.list_label_rows(data_hashes=[data_hash])
+        if len(matches) == 0:
+            raise Exception(f'Task in project <{proj.title}> is not annotated!')
+        lr_hash = matches[0].label_hash
         lr = proj.get_label_row(lr_hash)
         lr_data[proj.project_hash] = lr
     return lr_data
