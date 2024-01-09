@@ -1,7 +1,7 @@
 import streamlit as st
 
 from encord_consensus.app.common.state import get_state, InspectFilesState
-from encord_consensus.lib.project_access import get_all_dataset_hashes
+from encord_consensus.lib.project_access import get_all_dataset_hashes, list_projects
 
 
 def add_project(project_hash: str):
@@ -31,3 +31,21 @@ def remove_project(project_hash):
     if project_index is not None:
         get_state().projects.pop(project_index)
     get_state().inspect_files_state = InspectFilesState(data_hash=None)
+
+
+def search_projects():
+    text_search = st.text_input("Search projects by title", value="")
+    if text_search:
+        matched_projects = list_projects(get_state().encord_client, text_search)
+        for proj in matched_projects:
+            proj_hash = proj["project"].project_hash
+            emp = st.empty()
+            col1, col2 = emp.columns([9, 3])
+            col1.markdown(proj["project"].title, unsafe_allow_html=True)
+            if not any(proj_hash == p.project_hash for p in get_state().projects):
+                col2.button("Add", key=f"add_{proj_hash}", on_click=add_project, args=(proj_hash,))
+
+
+def reset_project_selection_state():
+    get_state().parent_project = None
+    get_state().projects = []

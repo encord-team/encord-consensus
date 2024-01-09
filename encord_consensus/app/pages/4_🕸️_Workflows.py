@@ -11,9 +11,8 @@ from encord_consensus.app.common.constants import (
     ENCORD_ICON_URL,
 )
 from encord_consensus.app.common.css import set_page_css
-from encord_consensus.app.common.project_selection import add_project
+from encord_consensus.app.common.project_selection import search_projects, reset_project_selection_state
 from encord_consensus.app.common.state import State, get_state
-from encord_consensus.lib.project_access import list_projects
 from encord_consensus.lib.utils import get_project_root
 from encord_consensus.lib.workflow_utils import send_to_annotate
 
@@ -55,6 +54,10 @@ def render_workflows_page():
     def toggle_visibility():
         get_state().show_element = not get_state().show_element
 
+    def start_creation_flow():
+        reset_project_selection_state()
+        toggle_visibility()
+
     def add_workflow(new_workflow_name: str, stage_filter: str):
         meta = {}
         source_project = get_state().parent_project
@@ -76,10 +79,6 @@ def render_workflows_page():
         }
         with open(config_path, 'w') as f:
             json.dump(wf_config, f)
-
-    def reset_creation_flow():
-        get_state().parent_project = None
-        get_state().projects = []
 
     def render_workflow_add():
         new_workflow_name = st.text_input('New Workflow Name')
@@ -105,20 +104,11 @@ def render_workflows_page():
 
             if st.button("Create"):
                 add_workflow(new_workflow_name, stage_filter)
-                reset_creation_flow()
+                reset_project_selection_state()
                 toggle_visibility()
                 st.experimental_rerun()
 
-        text_search = st.text_input("Search projects by title", value="")
-        if text_search:
-            matched_projects = list_projects(get_state().encord_client, text_search)
-            for proj in matched_projects:
-                proj_hash = proj["project"].project_hash
-                emp = st.empty()
-                col1, col2 = emp.columns([9, 3])
-                col1.markdown(proj["project"].title, unsafe_allow_html=True)
-                if not any(proj_hash == p.project_hash for p in get_state().projects):
-                    col2.button("Add", key=f"add_{proj_hash}", on_click=add_project, args=(proj_hash,))
+        search_projects()
 
     for wf_name, wf in wf_config.items():
         emp = st.empty()
@@ -137,7 +127,7 @@ def render_workflows_page():
     st.title('New Workflow')
 
     if not get_state().show_element:
-        st.button('➕', on_click=toggle_visibility)
+        st.button('➕', on_click=start_creation_flow)
     if get_state().show_element:
         render_workflow_add()
 
