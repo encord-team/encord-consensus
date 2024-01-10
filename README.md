@@ -59,7 +59,7 @@ We are actively working on the consensus tool, it can be upgraded through pip by
 1. Activate your virtual environment as per step 3. in 'Setup'.
 2. Run
 ```commandline
-pip install --upgrade git+https://github.com/encord-team/encord-consensus.git
+pip install --upgrade --force-reinstall git+https://github.com/encord-team/encord-consensus.git
 ```
 
 ## GUI
