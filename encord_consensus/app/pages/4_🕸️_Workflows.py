@@ -62,8 +62,6 @@ def render_workflows_page():
         meta = {}
         source_project = get_state().parent_project
         meta['source_project_name'] = source_project.title
-
-        new_target_project_names = []
         meta['target_project_names'] = [p.title for p in get_target_projects()]
         wf_config[new_workflow_name] = {
             "spec": {
@@ -72,10 +70,7 @@ def render_workflows_page():
                 "stage_filter": stage_filter,
                 "target_priority": 1
             },
-            "meta": {
-                "source_project_name": "source project",
-                "target_project_names": new_target_project_names
-            }
+            "meta": meta
         }
         with open(config_path, 'w') as f:
             json.dump(wf_config, f)
