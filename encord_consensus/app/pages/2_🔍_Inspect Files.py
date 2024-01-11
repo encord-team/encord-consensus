@@ -1,6 +1,3 @@
-import datetime
-import json
-
 import streamlit as st
 from encord.constants.enums import DataType
 from encord.project import Project
@@ -32,7 +29,7 @@ from encord_consensus.lib.generate_charts import (
 from encord_consensus.lib.project_access import (
     download_label_row_from_projects,
     get_all_dataset_hashes,
-    list_all_data_rows,
+    list_all_data_rows, get_or_create_label_row,
 )
 
 st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
@@ -86,14 +83,21 @@ def select_region(region: RegionOfInterest):
         get_state().inspect_files_state.regions_to_export.remove(region_hash)
 
 
-def prepare_export():
-    get_state().inspect_files_state.data_export = json.dumps(
-        export_regions_of_interest(
-            regions=get_state().inspect_files_state.regions_of_interest,
-            lr_data=get_state().inspect_files_state.lr_data,
-            region_hashes_to_include=get_state().inspect_files_state.regions_to_export,
-        )
+def send_downstream(target_project_hash: str) -> None:
+    export = export_regions_of_interest(
+        regions=get_state().inspect_files_state.regions_of_interest,
+        lr_data=get_state().inspect_files_state.lr_data,
+        region_hashes_to_include=get_state().inspect_files_state.regions_to_export,
     )
+    user_client = get_state().encord_client
+    project = user_client.get_project(target_project_hash)
+    data_hash = export['data_hash']
+    matched_rows = [lrm for lrm in project.label_rows if lrm['data_hash'] == data_hash]
+    label_row = get_or_create_label_row(project, matched_rows[0])
+    label_row['data_units'][data_hash]['labels'] = export['data_units'][data_hash]['labels']
+    label_row['classification_answers'] = export['classification_answers']
+    project.save_label_row(label_row['label_hash'], label_row)
+    st.info('Copied successfully!')
 
 
 def reset_export():
@@ -107,7 +111,6 @@ if len(get_state().projects) == 0:
             switch_page(CHOOSE_PROJECT_PAGE_NAME)
         st.write("<div class='PageButtonMarker'/>", unsafe_allow_html=True)  # Enlarge page buttons using CSS
     exit(0)
-
 
 st.write("## Select the file to run consensus on")
 
@@ -236,21 +239,11 @@ if len(get_state().inspect_files_state.lr_data) > 0:
                 if chart is not None:
                     st.altair_chart(chart.interactive(bind_y=False), use_container_width=True)
 
-    st.write("### Export")
+    st.write("### Send Downstream")
+    downstream_project_hash = st.text_input('Downstream Project Hash')
     if len(get_state().inspect_files_state.regions_to_export) == 0:
-        st.write("No regions available for export.")
+        st.write("No regions available for copy.")
+    if not downstream_project_hash:
+        st.write('You must specify a downstream project to export to.')
     else:
-        one_region = len(get_state().inspect_files_state.regions_to_export) == 1
-        st.write(
-            f"{len(get_state().inspect_files_state.regions_to_export)} region{'' if one_region else 's'} available for export."
-        )
-
-        if st.button("Prepare Export", on_click=prepare_export) and get_state().inspect_files_state.data_export:
-            st.write("Your export is ready to download!")
-            st.download_button(
-                label="Download Export",
-                data=get_state().inspect_files_state.data_export,
-                file_name=f'consensus_label_export_{datetime.datetime.now().isoformat(timespec="seconds")}.json',
-                mime="application/json",
-                on_click=reset_export,
-            )
+        st.button("Send to downstream project", on_click=send_downstream, args=(downstream_project_hash,))

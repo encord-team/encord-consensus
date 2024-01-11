@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Set, Union
 from encord import EncordUserClient, Project
 from encord.constants.enums import DataType
 from encord.exceptions import GenericServerError
+from encord.orm.label_row import LabelRow
 
 
 def get_encord_client(path_to_keyfile: str) -> EncordUserClient:
@@ -18,6 +19,7 @@ def get_project_title_if_exists(user_client: EncordUserClient, project_hash: str
     except GenericServerError:
         return None
     return project.title
+
 
 def list_projects(user_client: EncordUserClient, search_query: str) -> List[Dict]:
     return user_client.get_projects(title_like=f"%{search_query}%")
@@ -63,3 +65,19 @@ def download_label_row_from_projects(projects: list[Project], data_hash: str) ->
         lr = proj.get_label_row(lr_hash)
         lr_data[proj.project_hash] = lr
     return lr_data
+
+
+def get_or_create_label_row(project: Project, label_row_metadata: dict) -> LabelRow:
+    """
+    Return a LabelRow associated with a particular label_row_metadata.
+    :param project: The target project.
+    :param label_row_metadata: The metadata of the desired label_row.
+    :return: A LabelRow object, which contains a collection of data units and associated labels.
+    """
+    label_hash = label_row_metadata['label_hash']
+    data_hash = label_row_metadata['data_hash']
+    if label_hash is None:
+        label_row = project.create_label_row(data_hash)
+    else:
+        label_row = project.get_label_row(label_hash)
+    return label_row
