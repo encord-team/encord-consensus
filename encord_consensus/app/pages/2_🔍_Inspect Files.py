@@ -161,7 +161,7 @@ if len(get_state().inspect_files_state.lr_data) > 0:
         ),
         use_container_width=True,
     )
-    st.write("### Demo Consensus Analysis Tool")
+    st.write("### Consensus Analysis Tool")
     st.write(f"There are a total of {total_num_annnotators} annotators that could agree.")
     get_state().inspect_files_state.min_agreement_slider = st.slider(
         "Minimum Agreement",
