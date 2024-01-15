@@ -68,6 +68,10 @@ def select_data_hash(data_hash: str) -> None:
             st.warning(e)
 
 
+def reset_data_hash_selection() -> None:
+    get_state().inspect_files_state.data_hash = None
+
+
 def set_picker(to_pick: int) -> None:
     if to_pick in get_state().inspect_files_state.pickers_to_show:
         get_state().inspect_files_state.pickers_to_show.remove(to_pick)
@@ -112,21 +116,23 @@ if len(get_state().projects) == 0:
         st.write("<div class='PageButtonMarker'/>", unsafe_allow_html=True)  # Enlarge page buttons using CSS
     exit(0)
 
-st.write("## Select the file to run consensus on")
-
-for dr in list_all_data_rows(
-    get_state().encord_client, get_all_dataset_hashes(get_state().projects[0]), data_types=SUPPORTED_DATA_TYPES
-):
-    emp = st.empty()
-    col1, col2 = emp.columns([9, 3])
-    col1.markdown(dr.title, unsafe_allow_html=True)
-    col2.button(
-        "Select",
-        key=f"select_{dr.uid}",
-        on_click=select_data_hash,
-        args=(dr.uid,),
-        disabled=get_state().inspect_files_state == dr.uid,
-    )
+if not get_state().inspect_files_state.data_hash:
+    st.write("## Select the file to run consensus on")
+    for dr in list_all_data_rows(
+            get_state().encord_client, get_all_dataset_hashes(get_state().projects[0]), data_types=SUPPORTED_DATA_TYPES
+    ):
+        emp = st.empty()
+        col1, col2 = emp.columns([9, 3])
+        col1.markdown(dr.title, unsafe_allow_html=True)
+        col2.button(
+            "Select",
+            key=f"select_{dr.uid}",
+            on_click=select_data_hash,
+            args=(dr.uid,),
+            disabled=get_state().inspect_files_state == dr.uid,
+        )
+else:
+    st.button('Reset File Selection', on_click=reset_data_hash_selection)
 
 if get_state().inspect_files_state.data_hash is None:
     exit(0)
@@ -184,9 +190,9 @@ if len(get_state().inspect_files_state.lr_data) > 0:
 
     for region in get_state().inspect_files_state.regions_of_interest:
         if (
-            region.consensus_data.max_agreement >= get_state().inspect_files_state.min_agreement_slider
-            and region.consensus_data.integrated_agreement_score
-            >= get_state().inspect_files_state.min_integrated_score_slider
+                region.consensus_data.max_agreement >= get_state().inspect_files_state.min_agreement_slider
+                and region.consensus_data.integrated_agreement_score
+                >= get_state().inspect_files_state.min_integrated_score_slider
         ):
             st.checkbox(
                 "Select",
@@ -196,15 +202,15 @@ if len(get_state().inspect_files_state.lr_data) > 0:
             )
 
             mini_report = (
-                f"Mini Report\nIntegrated Agreement Score: {region.consensus_data.integrated_agreement_score}\n\n"
-                + "\n".join(
-                    [
-                        f"At least {k} annotators agreeing: {v} frames"
-                        for k, v in region.consensus_data.min_n_agreement.items()
-                    ]
-                )
-                + "\n\nN Scores\n"
-                + "\n".join([f"{n}-score: {s}" for n, s in region.consensus_data.n_scores.items()])
+                    f"Mini Report\nIntegrated Agreement Score: {region.consensus_data.integrated_agreement_score}\n\n"
+                    + "\n".join(
+                [
+                    f"At least {k} annotators agreeing: {v} frames"
+                    for k, v in region.consensus_data.min_n_agreement.items()
+                ]
+            )
+                    + "\n\nN Scores\n"
+                    + "\n".join([f"{n}-score: {s}" for n, s in region.consensus_data.n_scores.items()])
             )
             identifier_text = f"Region number {region.region_number}\n\nSelected Answers\n"
             for idx, part in enumerate(region.answer.fq_parts):
