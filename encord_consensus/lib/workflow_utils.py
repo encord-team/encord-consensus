@@ -1,9 +1,15 @@
+from enum import Enum
 from typing import List
 
 from encord import EncordUserClient
 
 
-def send_to_annotate(
+class WorkflowType(str, Enum):
+    PRE_POPULATE = 'Pre Populate'
+    COPY_DOWNSTREAM = 'Copy Downstream'
+
+
+def pre_populate(
         user_client: EncordUserClient,
         source_project_hash: str,
         target_project_hashes: List[str],

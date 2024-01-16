@@ -47,5 +47,5 @@ def search_projects():
 
 
 def reset_project_selection_state():
-    get_state().parent_project = None
+    get_state().reference_project = None
     get_state().projects = []
