@@ -16,8 +16,6 @@ def render_choose_projects_page():
     st.write(f"# {CHOOSE_PROJECT_PAGE_TITLE}")
     State.init()
 
-    search_projects()
-
     if len(get_state().projects) > 0:
         st.write("## Selected Projects")
         for proj in get_state().projects:
@@ -26,6 +24,7 @@ def render_choose_projects_page():
             col1, col2 = emp.columns([9, 3])
             col1.markdown(proj.title, unsafe_allow_html=True)
             col2.button("Remove", key=f"del_{proj_hash}", on_click=remove_project, args=(proj_hash,))
+    search_projects()
 
 
 if __name__ == "__main__":
