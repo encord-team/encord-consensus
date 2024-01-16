@@ -1,9 +1,9 @@
 import json
 from enum import Enum
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 
-from encord import EncordUserClient
+from encord import EncordUserClient, Project
 
 from encord_consensus.lib.utils import get_project_root
 
@@ -48,3 +48,18 @@ def pre_populate(
                 synced_counter += 1
                 lr_t.save()
     return synced_counter
+
+
+def get_downstream_copy_workflow_for_selection(non_reference_projects: List[Project]) -> Dict | None:
+    non_ref_project_hashes = set([p.project_hash for p in non_reference_projects])
+    wf_config = read_workflow_config()
+    matches = [
+        wf for wf in wf_config.values()
+        if set(wf['spec']['target_project_hashes']) == non_ref_project_hashes
+        and wf['workflow_type'] == WorkflowType.COPY_DOWNSTREAM.value
+    ]
+    if len(matches) == 0:
+        return None
+    if len(matches) == 1:
+        return matches.pop()
+    raise Exception('Found multiple matches in workflow config!')

@@ -31,6 +31,7 @@ from encord_consensus.lib.project_access import (
     get_all_dataset_hashes,
     list_all_data_rows, get_or_create_label_row,
 )
+from encord_consensus.lib.workflow_utils import get_downstream_copy_workflow_for_selection
 
 st.set_page_config(page_title=CONSENSUS_BROWSER_TAB_TITLE, page_icon=ENCORD_ICON_URL)
 set_page_css()
@@ -246,10 +247,13 @@ if len(get_state().inspect_files_state.lr_data) > 0:
                     st.altair_chart(chart.interactive(bind_y=False), use_container_width=True)
 
     st.write("### Send Downstream")
-    downstream_project_hash = st.text_input('Downstream Project Hash')
+    wf_config = get_downstream_copy_workflow_for_selection(get_state().projects)
+
     if len(get_state().inspect_files_state.regions_to_export) == 0:
         st.write("No regions available for copy.")
-    if not downstream_project_hash:
-        st.write('You must specify a downstream project to export to.')
+    if not wf_config:
+        st.write('You must create a copy downstream workflow!')
     else:
+        downstream_project_hash = wf_config["spec"]["source_project_hash"]
+        st.text(f'Downstream project: {wf_config["meta"]["reference_project_name"]}')
         st.button("Send to downstream project", on_click=send_downstream, args=(downstream_project_hash,))
