@@ -118,8 +118,8 @@ def render_workflows_page():
     for wf_name, wf in wf_config.items():
         emp = st.empty()
         col1, col2, col3 = emp.columns([5, 2, 2])
-        reference_name = "Source" if wf.get("workflow_type") == WorkflowType.PRE_POPULATE.value else "Target"
-        non_reference_name = "Target" if wf.get("workflow_type") == WorkflowType.PRE_POPULATE.value else "Source"
+        reference_name = "Source" if wf["workflow_type"] == WorkflowType.PRE_POPULATE.value else "Target"
+        non_reference_name = "Target" if wf["workflow_type"] == WorkflowType.PRE_POPULATE.value else "Source"
         with col1:
             with st.expander(wf_name):
                 st.text(f'Stage Filter: {wf["spec"]["stage_filter"]}')
@@ -128,7 +128,7 @@ def render_workflows_page():
                 st.text(f'{non_reference_name} Projects:')
                 for target_project_name in wf["meta"]["non_reference_project_names"]:
                     st.text(f'--{target_project_name}')
-        if wf.get("workflow_type", WorkflowType.PRE_POPULATE.value) == WorkflowType.PRE_POPULATE.value:
+        if wf["workflow_type"] == WorkflowType.PRE_POPULATE.value:
             col2.button("Sync 🔄", key=f"sync_{wf_name}", on_click=sync, args=(wf_name, wf,), type="primary")
         col3.button("Delete ❌", key=f"delete_{wf_name}", on_click=delete_workflow, args=(wf_name,))
 
