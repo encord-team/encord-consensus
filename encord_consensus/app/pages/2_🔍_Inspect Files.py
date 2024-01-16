@@ -254,6 +254,6 @@ if len(get_state().inspect_files_state.lr_data) > 0:
     if not wf_config:
         st.write('You must create a copy downstream workflow!')
     else:
-        downstream_project_hash = wf_config["spec"]["source_project_hash"]
+        downstream_project_hash = wf_config["spec"]["reference_project_hash"]
         st.text(f'Downstream project: {wf_config["meta"]["reference_project_name"]}')
         st.button("Send to downstream project", on_click=send_downstream, args=(downstream_project_hash,))

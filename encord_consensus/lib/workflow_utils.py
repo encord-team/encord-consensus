@@ -23,14 +23,14 @@ def read_workflow_config():
 
 def pre_populate(
         user_client: EncordUserClient,
-        source_project_hash: str,
-        target_project_hashes: List[str],
+        reference_project_hash: str,
+        non_reference_project_hashes: List[str],
         stage_filter: str = 'COMPLETE',
         target_priority: int = 1
 ) -> int:
-    source_project = user_client.get_project(source_project_hash)
+    source_project = user_client.get_project(reference_project_hash)
     target_projects = [
-        user_client.get_project(p_hash) for p_hash in target_project_hashes
+        user_client.get_project(p_hash) for p_hash in non_reference_project_hashes
     ]
     synced_counter = 0
     for lr_s in source_project.list_label_rows_v2(workflow_graph_node_title_eq=stage_filter):
@@ -55,7 +55,7 @@ def get_downstream_copy_workflow_for_selection(non_reference_projects: List[Proj
     wf_config = read_workflow_config()
     matches = [
         wf for wf in wf_config.values()
-        if set(wf['spec']['target_project_hashes']) == non_ref_project_hashes
+        if set(wf['spec']['non_reference_project_hashes']) == non_ref_project_hashes
         and wf['workflow_type'] == WorkflowType.COPY_DOWNSTREAM.value
     ]
     if len(matches) == 0:

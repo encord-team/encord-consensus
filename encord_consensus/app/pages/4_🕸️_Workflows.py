@@ -61,8 +61,8 @@ def render_workflows_page():
         wf_config[new_workflow_name] = {
             "workflow_type": workflow_type.value,
             "spec": {
-                "source_project_hash": reference_project.project_hash,
-                "target_project_hashes": [p.project_hash for p in get_non_reference_projects()],
+                "reference_project_hash": reference_project.project_hash,
+                "non_reference_project_hashes": [p.project_hash for p in get_non_reference_projects()],
                 "stage_filter": stage_filter,
                 "target_priority": 1 if workflow_type == WorkflowType.PRE_POPULATE else None
             },
