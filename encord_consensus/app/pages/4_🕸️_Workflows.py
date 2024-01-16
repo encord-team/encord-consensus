@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 from typing import Dict
 
 import streamlit as st
@@ -13,8 +12,7 @@ from encord_consensus.app.common.constants import (
 from encord_consensus.app.common.css import set_page_css
 from encord_consensus.app.common.project_selection import search_projects, reset_project_selection_state
 from encord_consensus.app.common.state import State, get_state
-from encord_consensus.lib.utils import get_project_root
-from encord_consensus.lib.workflow_utils import pre_populate, WorkflowType
+from encord_consensus.lib.workflow_utils import pre_populate, WorkflowType, WORKFLOW_CONFIG_PATH, read_workflow_config
 
 
 def render_workflows_page():
@@ -24,13 +22,10 @@ def render_workflows_page():
     State.init()
     user_client = get_state().encord_client
 
-    root_dir = get_project_root()
-    config_path = root_dir.joinpath(Path('.workflow_configs.json'))
-    if not config_path.exists():
-        with open(config_path, 'w') as f:
+    if not WORKFLOW_CONFIG_PATH.exists():
+        with open(WORKFLOW_CONFIG_PATH, 'w') as f:
             json.dump({}, f)
-    with open(config_path, 'r') as f:
-        wf_config = json.load(f)
+    wf_config = read_workflow_config()
 
     def sync(workflow_name: str, workflow: Dict):
         with st.spinner(f'Syncing {workflow_name}...'):
@@ -39,7 +34,7 @@ def render_workflows_page():
 
     def delete_workflow(workflow_name: str):
         del wf_config[workflow_name]
-        with open(config_path, 'w') as f:
+        with open(WORKFLOW_CONFIG_PATH, 'w') as f:
             json.dump(wf_config, f)
 
     def select_reference_project(project: Project):
@@ -73,7 +68,7 @@ def render_workflows_page():
             },
             "meta": meta
         }
-        with open(config_path, 'w') as f:
+        with open(WORKFLOW_CONFIG_PATH, 'w') as f:
             json.dump(wf_config, f)
 
     def render_workflow_add():

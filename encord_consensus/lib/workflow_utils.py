@@ -1,12 +1,24 @@
+import json
 from enum import Enum
+from pathlib import Path
 from typing import List
 
 from encord import EncordUserClient
+
+from encord_consensus.lib.utils import get_project_root
+
+root_dir = get_project_root()
+WORKFLOW_CONFIG_PATH = root_dir.joinpath(Path('.workflow_configs.json'))
 
 
 class WorkflowType(str, Enum):
     PRE_POPULATE = 'Pre Populate'
     COPY_DOWNSTREAM = 'Copy Downstream'
+
+
+def read_workflow_config():
+    with open(WORKFLOW_CONFIG_PATH, 'r') as f:
+        return json.load(f)
 
 
 def pre_populate(
