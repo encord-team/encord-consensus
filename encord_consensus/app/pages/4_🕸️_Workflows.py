@@ -54,7 +54,7 @@ def render_workflows_page():
     def toggle_visibility():
         get_state().show_element = not get_state().show_element
 
-    def start_creation_flow():
+    def toggle_creation_flow():
         reset_project_selection_state()
         toggle_visibility()
 
@@ -122,7 +122,9 @@ def render_workflows_page():
     st.title('New Workflow')
 
     if not get_state().show_element:
-        st.button('➕', on_click=start_creation_flow)
+        st.button('➕', on_click=toggle_creation_flow)
+    else:
+        st.button('🗑️', on_click=toggle_creation_flow)
     if get_state().show_element:
         render_workflow_add()
 
