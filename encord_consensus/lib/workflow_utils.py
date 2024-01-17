@@ -34,19 +34,21 @@ def pre_populate(
     ]
     synced_counter = 0
     for lr_s in source_project.list_label_rows_v2(workflow_graph_node_title_eq=stage_filter):
-        for target_project in target_projects:
-            lr_t = target_project.list_label_rows_v2(data_hashes=[lr_s.data_hash]).pop()
-            if lr_t.priority == 0.5:
-                if not lr_s.is_labelling_initialised:
-                    lr_s.initialise_labels()
-                lr_t.initialise_labels(include_object_feature_hashes=set(), include_classification_feature_hashes=set())
-                for obj in lr_s.get_object_instances():
-                    lr_t.add_object_instance(obj.copy())
-                for cl in lr_s.get_classification_instances():
-                    lr_t.add_classification_instance(cl.copy())
-                lr_t.set_priority(target_priority)
-                synced_counter += 1
-                lr_t.save()
+        if lr_s.priority != 0:
+            for target_project in target_projects:
+                lr_t = target_project.list_label_rows_v2(data_hashes=[lr_s.data_hash]).pop()
+                if lr_t.priority == 0.5:
+                    if not lr_s.is_labelling_initialised:
+                        lr_s.initialise_labels()
+                    lr_t.initialise_labels(include_object_feature_hashes=set(), include_classification_feature_hashes=set())
+                    for obj in lr_s.get_object_instances():
+                        lr_t.add_object_instance(obj.copy())
+                    for cl in lr_s.get_classification_instances():
+                        lr_t.add_classification_instance(cl.copy())
+                    lr_t.set_priority(target_priority)
+                    synced_counter += 1
+                    lr_t.save()
+            lr_s.set_priority(0)
     return synced_counter
 
 
